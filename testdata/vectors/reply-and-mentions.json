@@ -1,0 +1,75 @@
+{
+  "name": "reply-and-mentions",
+  "warning": "TEST-ONLY KEYS — generated for interop vectors. DO NOT use in production.",
+  "sender": {
+    "land_id": "land_sender000000000000",
+    "key_id": "pk_sender00000000000000",
+    "sign_seed_hex": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+    "sign_pub_hex": "bc7cbcb5636375fa1d82434d466724d92377f53b980695dd49d26d0ce12205a5",
+    "enc_priv_hex": "a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2",
+    "enc_pub_hex": "3c5c6ce2dd99e10d2c3de05d773aa15e3e6d971ed4e41389c93b4bbdda177212",
+    "binding_sig_hex": "20a9c0b52d86d0a181f49cbe073db2dcc50f7921cf9637182519d33b5511b43bc775556323a7c352aae7e0c0c26e56000882a32df51fcfd0274b1aee39222a0d",
+    "fingerprint": "66913 20808 32112 40924 09020 09645"
+  },
+  "recipients": [
+    {
+      "land_id": "land_amy0000000000000000",
+      "key_id": "pk_amy0000000000000000",
+      "sign_pub_hex": "",
+      "enc_priv_hex": "b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+      "enc_pub_hex": "d3337e4d4ee503a66976feb1fadf5bd21ba96fc2b1571b3e980d87cf49797510",
+      "fingerprint": ""
+    },
+    {
+      "land_id": "land_bob0000000000000000",
+      "key_id": "pk_bob0000000000000000",
+      "sign_pub_hex": "",
+      "enc_priv_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+      "enc_pub_hex": "db48257e1237976a74ad8cfedca00213408fe89ac6251f1b930245f242b5c31a",
+      "fingerprint": ""
+    }
+  ],
+  "k_hex": "4343434343434343434343434343434343434343434343434343434343434343",
+  "nonce_hex": "252525252525252525252525252525252525252525252525",
+  "aad": "bb-e2e-v1|br_testbridge0000000000|land_sender000000000000|c-20261029-0002",
+  "plaintext_hex": "7b2274797065223a226d657373616765222c2274657874223a227265706c7920626f6479222c2273656e745f6174223a22323032362d31302d32395430383a31353a33302e3530305a227d",
+  "ciphertext_hex": "f48582c0114d50d978640062dae6b241614c8178adb65ac0d816414ff0bb646593f9c23ab43c791fde31d8e94943b09199aaeb3d850e290f8b22c50240dc4518735c4a3b72419c7880f8c3ee9156553f1ab48b61c0d530317cb78d",
+  "sig_input_hex": "62622d6532652d76310a62725f74657374627269646765303030303030303030300a632d32303236313032392d303030320a6c616e645f73656e6465723030303030303030303030300a706b5f73656e64657230303030303030303030303030300a390a323032362d31302d32395430383a31353a33302e3530305a0a632d32303236313032392d303030300a6c616e645f626f62303030303030303030303030303030302c6c616e645f616d79303030303030303030303030303030300a4a53556c4a53556c4a53556c4a53556c4a53556c4a53556c4a53556c4a53556c0a416f2b592b32387975326b4d6a5a63472b542f6336706f66782f4273367836665a322b526738425456646f3d0a320a6c616e645f616d79303030303030303030303030303030303a706b5f616d79303030303030303030303030303030303a79422b447673385648414661374f6f664c71653144703573324237424d47534471626a575341474e5a32343d0a6c616e645f626f62303030303030303030303030303030303a706b5f626f62303030303030303030303030303030303a3064364a4e78344d7156507047467852666973717774653933766f3355474c4f396c306e675954505569493d0a",
+  "signature_hex": "4b3d0233937fd9611f06ca743defe2c91c169dc5d86b7cf6280f75c290532f3100e35a80b64584c05ec158f3205670909cad35cce45212009881c6b65f8e7f02",
+  "envelope": {
+    "header": {
+      "v": "bb-e2e-v1",
+      "bridge_id": "br_testbridge0000000000",
+      "msg_id": "c-20261029-0002",
+      "sender_land_id": "land_sender000000000000",
+      "sender_key_id": "pk_sender00000000000000",
+      "land_set_version": 9,
+      "created_at": "2026-10-29T08:15:30.500Z",
+      "mentions": [
+        "land_bob0000000000000000",
+        "land_amy0000000000000000"
+      ],
+      "reply_to": "c-20261029-0000",
+      "nonce": "JSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUl",
+      "ciphertext_sha256": "Ao+Y+28yu2kMjZcG+T/c6pofx/Bs6x6fZ2+Rg8BTVdo=",
+      "recipients": [
+        {
+          "land_id": "land_amy0000000000000000",
+          "key_id": "pk_amy0000000000000000",
+          "wrapped_key_sha256": "yB+Dvs8VHAFa7OofLqe1Dp5s2B7BMGSDqbjWSAGNZ24="
+        },
+        {
+          "land_id": "land_bob0000000000000000",
+          "key_id": "pk_bob0000000000000000",
+          "wrapped_key_sha256": "0d6JNx4MqVPpGFxRfisqwte93vo3UGLO9l0ngYTPUiI="
+        }
+      ]
+    },
+    "signature": "Sz0CM5N/2WEfBsp0Pe/iyRwWncXYa3z2KA91wpBTLzEA41qAtkWEwF7BWPMgVnCQnK01zORSEgCYgca2X45/Ag==",
+    "ciphertext": "9IWCwBFNUNl4ZABi2uayQWFMgXittlrA2BZBT/C7ZGWT+cI6tDx5H94x2OlJQ7CRmarrPYUOKQ+LIsUCQNxFGHNcSjtyQZx4gPjD7pFWVT8atIthwNUwMXy3jQ==",
+    "wrapped_keys": {
+      "land_amy0000000000000000": "/12HkH8TlLOhMZhbiU9RPecneM4nuMELMvk5gqh82kd8jzibofcVmSfDIZ1781oqj9O8RRSXRZSgFDY2VLol/j/gcsFmORgmSVuVie3hh44=",
+      "land_bob0000000000000000": "TCgXqdZo7YRNL5W5O2nsuEhQlXg6AVpCQWSw0JcCiU/uj4QtuHeK/rvRoqlkQ7c+hqTIEhwPX3r8btkF1oXkWbdTlqEEUrw2wiiZievs420="
+    }
+  }
+}

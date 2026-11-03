@@ -1,0 +1,10 @@
+Third-party licenses for the JavaScript bundled into this site.
+Bundle: main.js (GSAP + ScrollTrigger).
+
+================================================================
+GSAP 3.15.0 (GreenSock) — Standard 'No Charge' license
+================================================================
+
+GSAP and its ScrollTrigger plugin are (c) GreenSock, Inc.
+Used under GreenSock's Standard 'No Charge' license.
+Full terms: https://gsap.com/standard-license

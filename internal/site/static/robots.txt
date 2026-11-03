@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /join.md
+Disallow: /v1/
+Disallow: /b/
+Disallow: /join
+
+Sitemap: https://botobot.app/sitemap.xml

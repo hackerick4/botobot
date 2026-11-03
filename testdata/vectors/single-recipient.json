@@ -1,0 +1,58 @@
+{
+  "name": "single-recipient",
+  "warning": "TEST-ONLY KEYS — generated for interop vectors. DO NOT use in production.",
+  "sender": {
+    "land_id": "land_sender000000000000",
+    "key_id": "pk_sender00000000000000",
+    "sign_seed_hex": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+    "sign_pub_hex": "bc7cbcb5636375fa1d82434d466724d92377f53b980695dd49d26d0ce12205a5",
+    "enc_priv_hex": "a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2",
+    "enc_pub_hex": "3c5c6ce2dd99e10d2c3de05d773aa15e3e6d971ed4e41389c93b4bbdda177212",
+    "binding_sig_hex": "20a9c0b52d86d0a181f49cbe073db2dcc50f7921cf9637182519d33b5511b43bc775556323a7c352aae7e0c0c26e56000882a32df51fcfd0274b1aee39222a0d",
+    "fingerprint": "66913 20808 32112 40924 09020 09645"
+  },
+  "recipients": [
+    {
+      "land_id": "land_amy0000000000000000",
+      "key_id": "pk_amy0000000000000000",
+      "sign_pub_hex": "",
+      "enc_priv_hex": "b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+      "enc_pub_hex": "d3337e4d4ee503a66976feb1fadf5bd21ba96fc2b1571b3e980d87cf49797510",
+      "fingerprint": ""
+    }
+  ],
+  "k_hex": "4444444444444444444444444444444444444444444444444444444444444444",
+  "nonce_hex": "262626262626262626262626262626262626262626262626",
+  "aad": "bb-e2e-v1|br_testbridge0000000000|land_sender000000000000|c.single_01",
+  "plaintext_hex": "7b2274797065223a226d657373616765222c2274657874223a226869222c2273656e745f6174223a22323032362d31302d32395430393a30303a30302e3030305a227d",
+  "ciphertext_hex": "a978de136e96b32be848b86b391f976b420a68b89b43d20d7a99fc15c000e64007e9db2f6554b62a4c1249fea12ecf078fb5307e8272ffd1aaf5c321116f6c12b0e6412c522d5794bcbc46c615827ed9360a19",
+  "sig_input_hex": "62622d6532652d76310a62725f74657374627269646765303030303030303030300a632e73696e676c655f30310a6c616e645f73656e6465723030303030303030303030300a706b5f73656e64657230303030303030303030303030300a320a323032362d31302d32395430393a30303a30302e3030305a0a0a0a4a69596d4a69596d4a69596d4a69596d4a69596d4a69596d4a69596d4a69596d0a4f7251427a334a3279586f77696a612f467066796132396d753662774f2f4271707a4e6b4b7679347436673d0a310a6c616e645f616d79303030303030303030303030303030303a706b5f616d79303030303030303030303030303030303a6c52592f307177772f4d4f456f5551514e332b7251414f59506456434d6e4158373277666f484b5a3167773d0a",
+  "signature_hex": "e013095e62412af28b266db1bc5cd8f1977e7a7d1fdb17cd1d896c5641cd31eb678905b9110a1966a49e0624e3278c8c87c6e711240d880b10b3ec5369f6520b",
+  "envelope": {
+    "header": {
+      "v": "bb-e2e-v1",
+      "bridge_id": "br_testbridge0000000000",
+      "msg_id": "c.single_01",
+      "sender_land_id": "land_sender000000000000",
+      "sender_key_id": "pk_sender00000000000000",
+      "land_set_version": 2,
+      "created_at": "2026-10-29T09:00:00.000Z",
+      "mentions": null,
+      "reply_to": null,
+      "nonce": "JiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYm",
+      "ciphertext_sha256": "OrQBz3J2yXowija/Fpfya29mu6bwO/BqpzNkKvy4t6g=",
+      "recipients": [
+        {
+          "land_id": "land_amy0000000000000000",
+          "key_id": "pk_amy0000000000000000",
+          "wrapped_key_sha256": "lRY/0qww/MOEoUQQN3+rQAOYPdVCMnAX72wfoHKZ1gw="
+        }
+      ]
+    },
+    "signature": "4BMJXmJBKvKLJm2xvFzY8Zd+en0f2xfNHYlsVkHNMetniQW5EQoZZqSeBiTjJ4yMh8bnESQNiAsQs+xTafZSCw==",
+    "ciphertext": "qXjeE26WsyvoSLhrOR+Xa0IKaLibQ9INepn8FcAA5kAH6dsvZVS2KkwSSf6hLs8Hj7UwfoJy/9Gq9cMhEW9sErDmQSxSLVeUvLxGxhWCftk2Chk=",
+    "wrapped_keys": {
+      "land_amy0000000000000000": "/12HkH8TlLOhMZhbiU9RPecneM4nuMELMvk5gqh82kfjRZNU2FwYDeenU5L4OhCbiNS7QhOQQpOnEzExU70i+TjndcZhPh8hTlySjurmgIk="
+    }
+  }
+}

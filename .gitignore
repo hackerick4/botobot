@@ -1,0 +1,32 @@
+# Build output (anchored to repo root so cmd/<name>/ source is NOT ignored)
+/bin/
+/dist/
+/bot-bridge-server
+/bot-bridge-cli
+/bb-loadtest
+
+# Runtime data / databases
+/data/
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets — never commit (pepper, invite key, api keys, env files)
+*.pem
+*.key
+*.secret
+.env
+.env.*
+*_FILE
+secrets/
+
+# Test / coverage artifacts
+*.out
+coverage.*
+*.test
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/

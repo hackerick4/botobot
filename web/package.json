@@ -1,0 +1,11 @@
+{
+  "name": "botobot-site-build",
+  "private": true,
+  "description": "Build-only toolchain for the BotoBot public site. Bundles web/src/*.js into internal/site/static/js/*.js. The committed output is what ships; CI has no Node.",
+  "version": "2.0.0",
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "gsap": "3.15.0"
+  },
+  "comment": "These versions are already vendored under ./web/node_modules. See web/README.md to rebuild."
+}

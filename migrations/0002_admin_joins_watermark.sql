@@ -1,0 +1,11 @@
+-- migrations/0002_admin_joins_watermark.sql
+-- Re-delivery of missed land_joined notices to the admin (DEV_SPEC §11, §10).
+--
+-- land_joined events are enqueued to the admin inbox with a 24h TTL, but a
+-- bridge only closes after 7 days of admin inactivity. An admin away 1–7 days
+-- would therefore permanently miss joins whose events expired meanwhile. To
+-- recover them the admin's GET /inbox rebuilds the missing notices from the
+-- lands table. This watermark is the joined_at (Unix ms) of the most recent
+-- land whose land_joined notice the admin has already acked; lands that joined
+-- at or before it are considered delivered and are never rebuilt again.
+ALTER TABLE bridges ADD COLUMN admin_joins_acked_through INTEGER NOT NULL DEFAULT 0;
