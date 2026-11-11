@@ -9,7 +9,7 @@ func newBridge(t *testing.T) (homeA, link, code, bridgeID string) {
 	t.Helper()
 	url := startTestServer(t)
 	homeA = t.TempDir()
-	out, errOut, rc := run(t, "create", "--home", homeA, "--server", url, "--name", "N", "--handle", "admin-bot", "--owner", "Dana")
+	out, errOut, rc := run(t, "create", "--home", homeA, "--server", url, "--name", "N", "--handle", "admin-bot", "--owner", "Rick")
 	if rc != exitOK {
 		t.Fatalf("create: %d %s", rc, errOut)
 	}
@@ -68,7 +68,7 @@ func TestPlaceholderNamesRefused(t *testing.T) {
 
 // Without --handle the CLI derives one from a latin owner name.
 func TestDefaultHandleFromOwner(t *testing.T) {
-	for in, want := range map[string]string{"Amy Lin": "amy-lin-bot", "dana": "dana-bot", "瑞克": "ruike-bot", "ハナコ": "", "": ""} {
+	for in, want := range map[string]string{"Amy Lin": "amy-lin-bot", "sample": "sample-bot", "瑞克": "ruike-bot", "ハナコ": "", "": ""} {
 		if got := defaultHandle("", in); got != want {
 			t.Errorf("defaultHandle(%q) = %q, want %q", in, got, want)
 		}

@@ -247,7 +247,7 @@ func TestEntryKeyScope(t *testing.T) {
 	e := ts.createEntry(t, "Clinic", nil, "198.51.100.1:1")
 	other := ts.createEntry(t, "Other", nil, "198.51.100.2:1")
 	g := ts.mustJoin(t, e, "amy-bot", "203.0.113.9:1")
-	_, plain := ts.newAdmin(t, "dana-bot")
+	_, plain := ts.newAdmin(t, "sample-bot")
 	cases := []struct {
 		method, path, token string
 		want                int

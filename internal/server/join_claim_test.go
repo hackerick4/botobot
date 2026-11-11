@@ -23,7 +23,7 @@ func (ts *testServer) joinCreate(t *testing.T, body any, o reqOpts) (int, map[st
 func (ts *testServer) claim(t *testing.T, bridgeID, token, handle string, k testLand, remoteAddr string) (int, map[string]any) {
 	t.Helper()
 	body := claimReq{Token: token, Land: landBlock{
-		Profile: landProfileInput{Handle: handle, DisplayName: "Admin Bot", OwnerName: "Dana"},
+		Profile: landProfileInput{Handle: handle, DisplayName: "Admin Bot", OwnerName: "Rick"},
 		Key:     k.keyInput(t),
 	}}
 	status, m, _ := ts.do(t, http.MethodPost, "/v1/bridges/"+bridgeID+"/claim", body, reqOpts{remoteAddr: remoteAddr})
@@ -134,7 +134,7 @@ func TestJoinClaimThenMemberJoin(t *testing.T) {
 
 	// Admin claims the bridge.
 	adminKey := newTestLand(t)
-	status, cm := ts.claim(t, bridgeID, token, "dana-bot", adminKey, "203.0.113.5:1")
+	status, cm := ts.claim(t, bridgeID, token, "sample-bot", adminKey, "203.0.113.5:1")
 	if status != http.StatusCreated {
 		t.Fatalf("claim status = %d (%v)", status, cm)
 	}
@@ -174,7 +174,7 @@ func TestClaimTwice(t *testing.T) {
 	bridgeID := created["bridge_id"].(string)
 	token := created["claim_token"].(string)
 
-	if status, m := ts.claim(t, bridgeID, token, "dana-bot", newTestLand(t), "203.0.113.7:1"); status != http.StatusCreated {
+	if status, m := ts.claim(t, bridgeID, token, "sample-bot", newTestLand(t), "203.0.113.7:1"); status != http.StatusCreated {
 		t.Fatalf("first claim status = %d (%v)", status, m)
 	}
 	status, m := ts.claim(t, bridgeID, token, "rick2-bot", newTestLand(t), "203.0.113.7:1")
@@ -190,7 +190,7 @@ func TestClaimWrongToken(t *testing.T) {
 	_, created := ts.joinCreate(t, nil, reqOpts{remoteAddr: "203.0.113.8:1"})
 	bridgeID := created["bridge_id"].(string)
 
-	status, m := ts.claim(t, bridgeID, "bbc_wrongtokenvalue", "dana-bot", newTestLand(t), "203.0.113.8:1")
+	status, m := ts.claim(t, bridgeID, "bbc_wrongtokenvalue", "sample-bot", newTestLand(t), "203.0.113.8:1")
 	if status != http.StatusUnauthorized || errCode(m) != "claim_failed" {
 		t.Fatalf("wrong-token claim status=%d code=%q, want 401 claim_failed", status, errCode(m))
 	}
@@ -206,7 +206,7 @@ func TestClaimExpiredAndSwept(t *testing.T) {
 
 	// Advance past the claim TTL: claim now fails as claim_failed (expired).
 	ts.clk.Advance(time.Hour + time.Minute)
-	status, m := ts.claim(t, bridgeID, token, "dana-bot", newTestLand(t), "203.0.113.9:1")
+	status, m := ts.claim(t, bridgeID, token, "sample-bot", newTestLand(t), "203.0.113.9:1")
 	if status != http.StatusUnauthorized || errCode(m) != "claim_failed" {
 		t.Fatalf("expired claim status=%d code=%q, want 401 claim_failed", status, errCode(m))
 	}

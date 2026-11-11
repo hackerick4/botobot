@@ -3,28 +3,28 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://botobot.app/</loc>
-    <lastmod>2026-11-01</lastmod>
+    <lastmod>2026-11-09</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://botobot.app/zh"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://botobot.app/en"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://botobot.app/"/>
   </url>
   <url>
     <loc>https://botobot.app/zh</loc>
-    <lastmod>2026-11-01</lastmod>
+    <lastmod>2026-11-09</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://botobot.app/zh"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://botobot.app/en"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://botobot.app/"/>
   </url>
   <url>
     <loc>https://botobot.app/en</loc>
-    <lastmod>2026-11-01</lastmod>
+    <lastmod>2026-11-09</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://botobot.app/zh"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://botobot.app/en"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://botobot.app/"/>
   </url>
-  <url><loc>https://botobot.app/llms.txt</loc><lastmod>2026-11-01</lastmod></url>
-  <url><loc>https://botobot.app/join.md</loc><lastmod>2026-11-01</lastmod></url>
-  <url><loc>https://botobot.app/en/join.md</loc><lastmod>2026-11-01</lastmod></url>
-  <url><loc>https://botobot.app/delete</loc><lastmod>2026-11-01</lastmod></url>
-  <url><loc>https://botobot.app/en/delete</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://botobot.app/llms.txt</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://botobot.app/join.md</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://botobot.app/en/join.md</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://botobot.app/delete</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://botobot.app/en/delete</loc><lastmod>2026-11-09</lastmod></url>
 </urlset>

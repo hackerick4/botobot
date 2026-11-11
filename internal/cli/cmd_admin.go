@@ -95,6 +95,9 @@ func cmdLeave(a *app, args []string) *cliError {
 	var resp removedResp
 	if ce := bs.cli.do(context.Background(), http.MethodDelete,
 		"/v1/bridges/"+bs.bc.BridgeID+"/lands/"+bs.bc.LandID, nil, &resp); ce != nil {
+		if sess.alreadyClosed(bs, ce) {
+			return sess.pr.done()
+		}
 		return ce
 	}
 	sess.pr.emit(sess.withReleaseConfirmed(resp.closeOutcome.addTo(map[string]any{"type": "left", "land_id": resp.Removed, "bridge_closed": resp.BridgeClosed}), "離開"))
@@ -139,6 +142,9 @@ func cmdClose(a *app, args []string) *cliError {
 		closeOutcome
 	}
 	if ce := bs.cli.do(context.Background(), http.MethodDelete, "/v1/bridges/"+bs.bc.BridgeID, nil, &resp); ce != nil {
+		if sess.alreadyClosed(bs, ce) {
+			return sess.pr.done()
+		}
 		return ce
 	}
 	sess.pr.emit(sess.withReleaseConfirmed(resp.closeOutcome.addTo(map[string]any{"type": "closed"}), "關閉"))
@@ -281,6 +287,39 @@ func cmdStatus(a *app, args []string) *cliError {
 // removalNext is the follow-up printed after leave/close (removal manual at
 // /delete, steps 4 and 5). Since v0.5.1 one routine serves all of a bot's
 // bridges, so forget (which knows how many remain) says what to do with it.
+// alreadyClosed (v0.6.8, round-15 finding): close or leave on a two-bot
+// bridge the other side already closed is not an error. It prints that there
+// is nothing left to do and points to forget, and reports true; any other
+// error (or a public-entry line) reports false.
+func (s *session) alreadyClosed(bs *bridgeState, ce *cliError) bool {
+	if ce == nil || ce.Code != "bridge_closed" || bs.bc.EntryID != "" {
+		return false
+	}
+	s.pr.emit(map[string]any{"type": "already_closed", "bridge_id": bs.bc.BridgeID})
+	s.pr.raw(alreadyClosedNotice(bs.bc, s.endedBySelf(bs.bc.BridgeID)))
+	s.pr.raw(removalNext(bs.bc.BridgeID, s.cliCmd()))
+	return true
+}
+
+// endedBySelf reports whether this bot itself closed or left the bridge
+// earlier (so the notice does not blame the other side).
+func (s *session) endedBySelf(bid string) bool {
+	ts, err := s.ks.loadTickState(bid)
+	return err == nil && ts.Ended == endedSelf
+}
+
+func alreadyClosedNotice(bc *bridgeConfig, self bool) string {
+	n := displayName(bc)
+	if n == "" {
+		n = bc.BridgeID
+	}
+	en := prompts.IsEnglish(bc.Lang)
+	if self {
+		return "NOTIFY_OWNER: " + pick(en, "\""+n+"\" is already closed. Nothing more to do.", "「"+n+"」已經關閉，不必再做任何事。")
+	}
+	return "NOTIFY_OWNER: " + pick(en, "The other side already closed \""+n+"\". Nothing more to do.", "對方已經關閉「"+n+"」，不必再做任何事。")
+}
+
 func removalNext(bridgeID, cli string) string {
 	return "NEXT: 執行 " + cli + " forget --bridge " + bridgeID + " --yes 刪除本機金鑰；forget 會說明 routine 是否要刪。"
 }

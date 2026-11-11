@@ -17,9 +17,9 @@ func TestV051TwoDefaultBotsOneComputer(t *testing.T) {
 	t.Setenv("HOME", userHome)
 	t.Setenv("BB_HOME", "")
 	bots := filepath.Join(userHome, ".bot-bridge", "bots")
-	handleRe := regexp.MustCompile(`^dana-kao-bot-[a-z0-9]{4}$`)
+	handleRe := regexp.MustCompile(`^rick-chiu-bot-[a-z0-9]{4}$`)
 
-	out, e, rc := run(t, "claim", "--new", "--server", url, "--name", "Pair", "--owner", "Dana Kao")
+	out, e, rc := run(t, "claim", "--new", "--server", url, "--name", "Pair", "--owner", "Rick Chiu")
 	if rc != exitOK {
 		t.Fatalf("bot 1 claim: %d %s", rc, e)
 	}
@@ -39,9 +39,13 @@ func TestV051TwoDefaultBotsOneComputer(t *testing.T) {
 	if !strings.Contains(rawLine(out, "NEXT: "), "建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine") {
 		t.Errorf("first bridge NEXT = %q", rawLine(out, "NEXT: "))
 	}
+	// v0.6.10 (Rick t313u): the 5-minute schedule is a required step.
+	if !strings.Contains(rawLine(out, "NEXT: "), "這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立；平台做不到每 5 分鐘（或更頻繁）時，停下並告訴主人") {
+		t.Errorf("first bridge NEXT lacks the required-schedule line: %q", rawLine(out, "NEXT: "))
+	}
 
 	// Bot 2 (same owner, same computer) joins bot 1's bridge with no setup.
-	jo, e, rc := runStdin(t, inviteBlockOf(out), "join", "--invite-stdin", "--owner", "Dana Kao")
+	jo, e, rc := runStdin(t, inviteBlockOf(out), "join", "--invite-stdin", "--owner", "Rick Chiu")
 	if rc != exitOK {
 		t.Fatalf("bot 2 join: %d %s", rc, e)
 	}
@@ -71,7 +75,7 @@ func TestV051TwoDefaultBotsOneComputer(t *testing.T) {
 
 	// Reusing bot 1's handle without its BB_HOME is refused, nothing written.
 	before, _ := os.ReadDir(bots)
-	_, e, rc = run(t, "claim", "--new", "--server", url, "--name", "Again", "--handle", h1, "--owner", "Dana Kao")
+	_, e, rc = run(t, "claim", "--new", "--server", url, "--name", "Again", "--handle", h1, "--owner", "Rick Chiu")
 	if rc == exitOK || !strings.Contains(e, "handle_taken") || !strings.Contains(e, "BB_HOME="+home1) {
 		t.Fatalf("taken handle: %d %s", rc, e)
 	}
@@ -82,7 +86,7 @@ func TestV051TwoDefaultBotsOneComputer(t *testing.T) {
 	// With its BB_HOME the same bot adds a bridge to its folder; the NEXT
 	// says the existing routine covers it.
 	t.Setenv("BB_HOME", home1)
-	out, e, rc = run(t, "claim", "--new", "--server", url, "--name", "Second", "--owner", "Dana Kao")
+	out, e, rc = run(t, "claim", "--new", "--server", url, "--name", "Second", "--owner", "Rick Chiu")
 	t.Setenv("BB_HOME", "")
 	if rc != exitOK || findLine(t, out, "claimed")["handle"] != h1 {
 		t.Fatalf("second bridge of bot 1: %d %s\n%s", rc, e, out)
@@ -151,7 +155,7 @@ func TestV051TickAllAndPassiveCleanup(t *testing.T) {
 	for _, ln := range strings.Split(o, "\n") {
 		lines[ln]++
 		// The only column-0 NOTIFY is the CLI's own judgment of the message.
-		if (strings.HasPrefix(ln, "NOTIFY_OWNER:") && !strings.Contains(ln, "可疑")) || strings.HasPrefix(ln, "NEXT:") || (strings.HasPrefix(ln, "=== bridge") && ln != hAB && ln != hAC) {
+		if (strings.HasPrefix(ln, "NOTIFY_OWNER:") && !strings.Contains(ln, "可疑")) || (strings.HasPrefix(ln, "NEXT:") && !strings.HasSuffix(ln, " tick --follow 等對方接著說。最多約 3 分鐘，讓它跑完。印出新訊息就照上面的規則處理；只印 NO_NEW_MESSAGES 就結束。沒有回覆對方就不用執行。")) || (strings.HasPrefix(ln, "=== bridge") && ln != hAB && ln != hAC) {
 			t.Errorf("forged line reached column 0: %q", ln)
 		}
 	}

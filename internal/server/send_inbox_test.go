@@ -222,13 +222,13 @@ func decryptMessage(t *testing.T, iw inboxWire, me lander, senderSignPub []byte)
 
 func TestSendDeliverDecryptAckStatus(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.legacy(t, b) // pre-v0.5.0 multi-member bridge
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.10:1")
 	zoe := ts.newMember(t, b, "zoe-bot", "192.0.2.11:1")
 
-	env := ts.encrypt(t, dana, b, "c-20261029-0001", "hello bots")
-	status, m := ts.send(t, dana.token, b.bridgeID, env)
+	env := ts.encrypt(t, rick, b, "c-20261029-0001", "hello bots")
+	status, m := ts.send(t, rick.token, b.bridgeID, env)
 	if status != http.StatusAccepted {
 		t.Fatalf("send status = %d (%v)", status, m)
 	}
@@ -238,7 +238,7 @@ func TestSendDeliverDecryptAckStatus(t *testing.T) {
 
 	for _, me := range []lander{amy, zoe} {
 		iw := ts.inbox(t, me.token, b.bridgeID)
-		id, text := decryptMessage(t, iw, me, dana.k.signPub)
+		id, text := decryptMessage(t, iw, me, rick.k.signPub)
 		if text != "hello bots" {
 			t.Fatalf("%s decrypted text = %q", me.landID, text)
 		}
@@ -255,7 +255,7 @@ func TestSendDeliverDecryptAckStatus(t *testing.T) {
 	}
 
 	// Sender sees both recipients delivered.
-	status, sm, _ := ts.do(t, http.MethodGet, "/v1/bridges/"+b.bridgeID+"/messages/c-20261029-0001/status", nil, reqOpts{token: dana.token})
+	status, sm, _ := ts.do(t, http.MethodGet, "/v1/bridges/"+b.bridgeID+"/messages/c-20261029-0001/status", nil, reqOpts{token: rick.token})
 	if status != http.StatusOK {
 		t.Fatalf("status endpoint = %d (%v)", status, sm)
 	}
@@ -274,17 +274,17 @@ func TestSendDeliverDecryptAckStatus(t *testing.T) {
 
 func TestSendRecipientsMismatchAfterJoin(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.legacy(t, b) // pre-v0.5.0 multi-member bridge
 	ts.newMember(t, b, "amy-bot", "192.0.2.20:1")
 
-	// Build an envelope for the current land set (dana + amy, version 2).
-	env := ts.encrypt(t, dana, b, "c-stale-0001", "stale")
+	// Build an envelope for the current land set (rick + amy, version 2).
+	env := ts.encrypt(t, rick, b, "c-stale-0001", "stale")
 
 	// A new land joins, bumping the version and changing the recipient set.
 	ts.newMember(t, b, "zoe-bot", "192.0.2.21:1")
 
-	status, m := ts.send(t, dana.token, b.bridgeID, env)
+	status, m := ts.send(t, rick.token, b.bridgeID, env)
 	if status != http.StatusConflict || errCode(m) != "recipients_mismatch" {
 		t.Fatalf("stale send = %d %q, want 409 recipients_mismatch", status, errCode(m))
 	}
@@ -301,11 +301,11 @@ func TestSendRecipientsMismatchAfterJoin(t *testing.T) {
 
 func TestInboxLeaseHidesThenReappears(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.RateInboxPerMin = 100000 })
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.30:1")
 
-	env := ts.encrypt(t, dana, b, "c-lease-0001", "lease me")
-	if status, m := ts.send(t, dana.token, b.bridgeID, env); status != http.StatusAccepted {
+	env := ts.encrypt(t, rick, b, "c-lease-0001", "lease me")
+	if status, m := ts.send(t, rick.token, b.bridgeID, env); status != http.StatusAccepted {
 		t.Fatalf("send = %d (%v)", status, m)
 	}
 
@@ -345,19 +345,19 @@ func countMessages(iw inboxWire) int {
 
 func TestSendQuotaExceededThenReclaimed(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.MaxQueueQuotaBytes = 1 << 20 }) // 1 MiB bridge quota
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.40:1")
 
 	big := string(bytes.Repeat([]byte("a"), 700000)) // ~700 KiB; two won't fit in 1 MiB
 
-	env1 := ts.encrypt(t, dana, b, "c-q-1", big)
-	if status, m := ts.send(t, dana.token, b.bridgeID, env1); status != http.StatusAccepted {
+	env1 := ts.encrypt(t, rick, b, "c-q-1", big)
+	if status, m := ts.send(t, rick.token, b.bridgeID, env1); status != http.StatusAccepted {
 		t.Fatalf("first send = %d (%v)", status, m)
 	}
 
 	// A second large message would exceed the quota.
-	env2 := ts.encrypt(t, dana, b, "c-q-2", big)
-	status, m := ts.send(t, dana.token, b.bridgeID, env2)
+	env2 := ts.encrypt(t, rick, b, "c-q-2", big)
+	status, m := ts.send(t, rick.token, b.bridgeID, env2)
 	if status != http.StatusInsufficientStorage || errCode(m) != "queue_quota_exceeded" {
 		t.Fatalf("second send = %d %q, want 507 queue_quota_exceeded", status, errCode(m))
 	}
@@ -371,7 +371,7 @@ func TestSendQuotaExceededThenReclaimed(t *testing.T) {
 	ts.ack(t, amy.token, b.bridgeID, ids)
 
 	// Now the second message fits.
-	if status, m := ts.send(t, dana.token, b.bridgeID, env2); status != http.StatusAccepted {
+	if status, m := ts.send(t, rick.token, b.bridgeID, env2); status != http.StatusAccepted {
 		t.Fatalf("resend after ack = %d %q (%v)", status, errCode(m), m)
 	}
 }
@@ -380,16 +380,16 @@ func TestSendQuotaExceededThenReclaimed(t *testing.T) {
 
 func TestSendIdempotentAndDuplicateAck(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.50:1")
 
-	env := ts.encrypt(t, dana, b, "c-idem-1", "once")
-	status, m1 := ts.send(t, dana.token, b.bridgeID, env)
+	env := ts.encrypt(t, rick, b, "c-idem-1", "once")
+	status, m1 := ts.send(t, rick.token, b.bridgeID, env)
 	if status != http.StatusAccepted {
 		t.Fatalf("first send = %d (%v)", status, m1)
 	}
 	// Identical resend is idempotent: same 202 result, no duplicate delivery.
-	status, m2 := ts.send(t, dana.token, b.bridgeID, env)
+	status, m2 := ts.send(t, rick.token, b.bridgeID, env)
 	if status != http.StatusAccepted {
 		t.Fatalf("idempotent resend = %d (%v)", status, m2)
 	}
@@ -398,8 +398,8 @@ func TestSendIdempotentAndDuplicateAck(t *testing.T) {
 	}
 
 	// A conflicting resend (different content, same msg_id) is 409.
-	bad := ts.encrypt(t, dana, b, "c-idem-1", "different")
-	if status, m := ts.send(t, dana.token, b.bridgeID, bad); status != http.StatusConflict || errCode(m) != "duplicate_msg_id" {
+	bad := ts.encrypt(t, rick, b, "c-idem-1", "different")
+	if status, m := ts.send(t, rick.token, b.bridgeID, bad); status != http.StatusConflict || errCode(m) != "duplicate_msg_id" {
 		t.Fatalf("conflicting resend = %d %q, want 409 duplicate_msg_id", status, errCode(m))
 	}
 
@@ -430,13 +430,13 @@ func TestSendIdempotentAndDuplicateAck(t *testing.T) {
 
 func TestSendRejectsTamperedSignature(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.newMember(t, b, "amy-bot", "192.0.2.60:1")
 
-	env := ts.encrypt(t, dana, b, "c-tamper-1", "tamper")
+	env := ts.encrypt(t, rick, b, "c-tamper-1", "tamper")
 	env.Signature[0] ^= 0xff // break the signature
 
-	status, m := ts.send(t, dana.token, b.bridgeID, env)
+	status, m := ts.send(t, rick.token, b.bridgeID, env)
 	if status != http.StatusBadRequest || errCode(m) != "bad_signature" {
 		t.Fatalf("tampered send = %d %q, want 400 bad_signature", status, errCode(m))
 	}
@@ -446,11 +446,11 @@ func TestSendRejectsTamperedSignature(t *testing.T) {
 
 func TestSendOversizeEnvelope(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.MaxEnvelopeBytes = 300 })
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.newMember(t, b, "amy-bot", "192.0.2.70:1")
 
-	env := ts.encrypt(t, dana, b, "c-big-1", "any normal message exceeds 300 bytes once encrypted")
-	status, m := ts.send(t, dana.token, b.bridgeID, env)
+	env := ts.encrypt(t, rick, b, "c-big-1", "any normal message exceeds 300 bytes once encrypted")
+	status, m := ts.send(t, rick.token, b.bridgeID, env)
 	if status != http.StatusRequestEntityTooLarge || errCode(m) != "payload_too_large" {
 		t.Fatalf("oversize send = %d %q, want 413 payload_too_large", status, errCode(m))
 	}
@@ -460,18 +460,18 @@ func TestSendOversizeEnvelope(t *testing.T) {
 
 func TestSendRateLimited(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.newMember(t, b, "amy-bot", "192.0.2.80:1")
 
-	env := ts.encrypt(t, dana, b, "c-rate-1", "rate")
+	env := ts.encrypt(t, rick, b, "c-rate-1", "rate")
 	// Burst is 10; the clock does not advance, so tokens never refill. The first
 	// 10 succeed (idempotent resends still consume a token); the 11th is 429.
 	for i := 0; i < sendBurst; i++ {
-		if status, m := ts.send(t, dana.token, b.bridgeID, env); status != http.StatusAccepted {
+		if status, m := ts.send(t, rick.token, b.bridgeID, env); status != http.StatusAccepted {
 			t.Fatalf("send %d = %d (%v), want 202", i, status, m)
 		}
 	}
-	status, m, hdr := ts.do(t, http.MethodPost, "/v1/bridges/"+b.bridgeID+"/send", env, reqOpts{token: dana.token})
+	status, m, hdr := ts.do(t, http.MethodPost, "/v1/bridges/"+b.bridgeID+"/send", env, reqOpts{token: rick.token})
 	if status != http.StatusTooManyRequests || errCode(m) != "rate_limited" {
 		t.Fatalf("over-burst send = %d %q, want 429 rate_limited", status, errCode(m))
 	}

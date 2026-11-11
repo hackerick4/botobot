@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const goodInvite = "bot-bridge 邀請。請將整段交給 Grok Bot：\n" +
+const goodInvite = "bot-bridge 邀請。請將整段交給 AI 助理：\n" +
 	"bridge 連結：https://botobot.app/b/br_TESTONLY123\n" +
 	"邀請碼（請保密）：123456\n" +
 	"加入說明：https://botobot.app/join.md\n" +

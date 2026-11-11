@@ -41,6 +41,24 @@ func fileSHA256(path string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
+// readManifestFile reads an already-downloaded manifest or signature file,
+// bounded to the same size limit the network path enforces.
+func readManifestFile(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	b, err := io.ReadAll(io.LimitReader(f, update.MaxManifestBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(b)) > update.MaxManifestBytes {
+		return nil, errors.New("file too large")
+	}
+	return b, nil
+}
+
 func verifyNotice(en bool) string {
 	if en {
 		return "NOTIFY_OWNER: The downloaded bot-bridge program does not match the official one, so it was not installed. Download it only from botobot.app."
@@ -49,16 +67,21 @@ func verifyNotice(en bool) string {
 }
 
 func cmdVerifySelf(a *app, args []string) *cliError {
-	var file, lang string
+	var file, lang, manFile, sigFile string
 	g, fs, e := a.parse("verify-self", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&file, "file", "", "check this downloaded CLI file instead of the running one (do not run the file first)")
 		fs.StringVar(&lang, "lang", "zh", "notice language: zh or en")
+		fs.StringVar(&manFile, "manifest", "", "verify against this already-downloaded manifest.json instead of fetching it (its signature is still checked against the built-in release key)")
+		fs.StringVar(&sigFile, "sig", "", "the manifest.json.sig that goes with --manifest")
 	})
 	if e != nil {
 		return e
 	}
 	if fs.NArg() > 0 {
 		return usageErrorf("verify-self: unexpected arguments")
+	}
+	if (manFile == "") != (sigFile == "") {
+		return usageErrorf("verify-self: --manifest and --sig must be given together")
 	}
 	en := lang == "en"
 	pr := newPrinter(a.stdout, g.pretty)
@@ -76,17 +99,29 @@ func cmdVerifySelf(a *app, args []string) *cliError {
 		return &cliError{Code: "verify_failed", Message: "verify-self: cannot read the file: " + oneLine(err.Error(), 200), Exit: exitGeneral}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	client := &http.Client{Timeout: 15 * time.Second}
-	mURL := manifestURL()
-	body, _, _, err := fetchLimited(ctx, client, mURL, "")
-	if err != nil {
-		return &cliError{Code: "verify_unavailable", Message: "verify-self: cannot fetch the signed manifest (" + oneLine(err.Error(), 120) + "); do not install or run the file until this succeeds", Exit: exitGeneral}
-	}
-	sig, _, _, err := fetchLimited(ctx, client, mURL+".sig", "")
-	if err != nil {
-		return &cliError{Code: "verify_unavailable", Message: "verify-self: cannot fetch the manifest signature (" + oneLine(err.Error(), 120) + "); do not install or run the file until this succeeds", Exit: exitGeneral}
+	var body, sig []byte
+	if manFile != "" {
+		// Reuse the manifest the install command already downloaded and checked
+		// with openssl: skips two network round trips, but the signature is
+		// still verified below against the release key built into this binary,
+		// so a tampered file is rejected exactly as a fetched one would be.
+		if body, err = readManifestFile(manFile); err != nil {
+			return &cliError{Code: "verify_unavailable", Message: "verify-self: cannot read --manifest (" + oneLine(err.Error(), 120) + ")", Exit: exitGeneral}
+		}
+		if sig, err = readManifestFile(sigFile); err != nil {
+			return &cliError{Code: "verify_unavailable", Message: "verify-self: cannot read --sig (" + oneLine(err.Error(), 120) + ")", Exit: exitGeneral}
+		}
+	} else {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		client := &http.Client{Timeout: 15 * time.Second}
+		mURL := manifestURL()
+		if body, _, _, err = fetchLimited(ctx, client, mURL, ""); err != nil {
+			return &cliError{Code: "verify_unavailable", Message: "verify-self: cannot fetch the signed manifest (" + oneLine(err.Error(), 120) + "); do not install or run the file until this succeeds", Exit: exitGeneral}
+		}
+		if sig, _, _, err = fetchLimited(ctx, client, mURL+".sig", ""); err != nil {
+			return &cliError{Code: "verify_unavailable", Message: "verify-self: cannot fetch the manifest signature (" + oneLine(err.Error(), 120) + "); do not install or run the file until this succeeds", Exit: exitGeneral}
+		}
 	}
 	// Only the keys built into this binary: a folder's learned keys are not
 	// read, so this works the same for a brand-new bot.

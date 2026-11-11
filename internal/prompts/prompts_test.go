@@ -15,7 +15,7 @@ func sampleInfo() Info {
 		ClaimToken:      "bbc_SECRETCLAIMTOKENVALUE1234567890abcdefg",
 		ClaimExpiresRel: "30 分鐘",
 		DLBase:          "https://host.example/dl",
-		OwnerHint:       "Dana",
+		OwnerHint:       "Rick",
 	}
 }
 
@@ -140,7 +140,7 @@ func TestRoutineLineHardcodesBridge(t *testing.T) {
 
 func TestSuggestHandle(t *testing.T) {
 	cases := map[string]string{
-		"Dana":      "dana-bot",
+		"Sample":    "sample-bot",
 		"Amy Chen":  "amy-chen-bot",
 		"王小明":       "my-bot", // non-ascii stripped -> fallback
 		"":          "my-bot",
@@ -214,5 +214,24 @@ func TestEnglishPrompts(t *testing.T) {
 	}
 	if !strings.Contains(HandleRuleZH, "此 Bot 自己的名稱") || strings.Contains(HandleRuleZH, "太常見") || strings.Contains(HandleRuleZH, "-bot（") {
 		t.Error("handle rule is not a single rule")
+	}
+}
+
+// v0.6.11 (Rick t327u): the Creator prompt hands the invite to the owner as a
+// chat message, never a downloaded/uploaded file — the download-txt workaround
+// that ordinary-invite creators fell into. Rick 2026-11-10: the invite goes in
+// its own message inside a ``` code block, and the BEGIN/END markers are not
+// shown to the owner (a bot had merged the notice and invite into one plain
+// bubble with the markers still in it).
+func TestV0611CreatorInvitePasteAsText(t *testing.T) {
+	zh := Creator(sampleInfo())
+	if !strings.Contains(zh, "放進 ``` 程式碼區塊") || !strings.Contains(zh, "不要存成 .txt 或附件") {
+		t.Errorf("zh Creator step 4 missing the code-block / not-a-file clarification:\n%s", zh)
+	}
+	en := sampleInfo()
+	en.Lang = "en"
+	got := Creator(en)
+	if !strings.Contains(got, "inside a ``` code block") || !strings.Contains(got, "do not save it as a .txt or attachment") {
+		t.Errorf("en Creator step 4 missing the code-block / not-a-file clarification:\n%s", got)
 	}
 }

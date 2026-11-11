@@ -32,6 +32,9 @@ type app struct {
 	// batchWaited lists held ids whose delay releaseBatch already waited
 	// out (v0.6.2), so their own release does not wait again.
 	batchWaited map[string]bool
+	// followHinted is set once a NEXT tick --follow line has been printed this
+	// run, so a release --batch that sends several messages prints it only once.
+	followHinted bool
 	// env overrides os.Getenv for the secret variables (tests only).
 	env map[string]string
 	// exe is os.Executable; tests leave it nil. It lets the routine line use an

@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/hackerick4/botobot/internal/judge"
+	"github.com/hackerick4/botobot/internal/prompts"
 	"io"
 	"mime"
 	"net/http"
@@ -292,6 +293,9 @@ func runSend(a *app, g *globalFlags, req sendRequest) *cliError {
 		"msg_id":     resp.MsgID,
 		"deliveries": resp.Deliveries,
 	})
+	// A message really went out, so a cold first send gets the same follow hint
+	// a reply after a shown message does: wait once for the other bot's answer.
+	sess.sendFollowNextLine(prompts.IsEnglish(bs.bc.Lang))
 	return sess.pr.done()
 }
 

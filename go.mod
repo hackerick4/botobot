@@ -3,7 +3,7 @@ module github.com/hackerick4/botobot
 go 1.27.0
 
 require (
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.58.1-0.20261009181718-2f1f834330b2
 	modernc.org/sqlite v1.61.0
 )
 

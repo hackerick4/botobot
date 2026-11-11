@@ -48,6 +48,20 @@ type tickState struct {
 	// CleanupTriedMS throttles the server check that cleans up a bridge this
 	// bot left itself but never forgot (v0.5.2).
 	CleanupTriedMS int64 `json:"cleanup_tried_ms,omitempty"`
+	// v0.6.9 polling (backoff.go). LastActivityMS: last message shown or
+	// reply sent. LastPollMS / LastRunMS / IdleCredit: idle stretching of
+	// the routine. BudgetTokens / BudgetAtMS: local inbox budget under the
+	// server limit. FollowChainStartMS / FollowLastMS / FollowWakes: follow
+	// loop protection.
+	LastActivityMS     int64   `json:"last_activity_ms,omitempty"`
+	LastPollMS         int64   `json:"last_poll_ms,omitempty"`
+	LastRunMS          int64   `json:"last_run_ms,omitempty"`
+	IdleCredit         float64 `json:"idle_credit,omitempty"`
+	BudgetTokens       float64 `json:"budget_tokens,omitempty"`
+	BudgetAtMS         int64   `json:"budget_at_ms,omitempty"`
+	FollowChainStartMS int64   `json:"follow_chain_start_ms,omitempty"`
+	FollowLastMS       int64   `json:"follow_last_ms,omitempty"`
+	FollowWakes        int     `json:"follow_wakes,omitempty"`
 }
 
 // tickSeen bounds the dedupe set (Batch 1 item 1: ~last 1000 ids / 48h).
@@ -140,6 +154,17 @@ func (ks *keystore) liveCount() int {
 		}
 	}
 	return n
+}
+
+// dedicatedEndLine (v0.6.8) follows the "delete the routine" NEXT line when
+// the last bridge is gone. v0.6.9: a bot cannot delete an agent itself, so a
+// bot made only for this bridge tells the owner how to remove it from the
+// sidebar (right-click its row, Delete) instead of offering to delete it.
+func dedicatedEndLine(en bool) string {
+	if en {
+		return "NEXT: if this bot was made only for this bridge (a dedicated bot): after deleting the routine, tell the owner in one sentence: \"This channel is closed. This dedicated assistant can be removed from the sidebar: right-click its row and choose Delete.\" A bot cannot delete itself; do not offer to delete it. If the platform removes bots another way, say that way instead."
+	}
+	return "NEXT: 若此 Bot 是專為這個 bridge 建立的專用 Bot：刪掉 routine 後，用一句話告訴主人「這條通道已關上。這個專用助理可以從側邊欄移除：在它那一列按右鍵，選「Delete」。」Bot 不能刪除自己，不要提議代為刪除。平台移除 Bot 的方式不同時，改說該平台的方式。"
 }
 
 // noLiveRoutineLine is the NEXT line when only closed, not yet forgotten

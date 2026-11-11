@@ -216,7 +216,7 @@ func TestV052Move(t *testing.T) {
 	url := startTestServer(t)
 	homeMain, homeOld, homePeer, homePeer2 := t.TempDir(), t.TempDir(), t.TempDir(), t.TempDir()
 	v052Pair(t, url, homeMain, homePeer, "Main")
-	ob := v052Pair(t, url, homeOld, homePeer2, "OldOne", "--handle", "bb-test-a")
+	ob := v052Pair(t, url, homeOld, homePeer2, "OldOne", "--handle", "old-bot-q4m8")
 
 	// Held, with the expanded list and names in the reason; nothing moved yet.
 	o, e, rc := run(t, "move", "--home", homeMain, "--from", homeOld, "--yes")
@@ -291,7 +291,7 @@ func TestV052MoveRefusesLinks(t *testing.T) {
 	url := startTestServer(t)
 	homeMain, homeOld := t.TempDir(), t.TempDir()
 	v052Pair(t, url, homeMain, "", "Main")
-	ob := v052Pair(t, url, homeOld, "", "Old", "--handle", "bb-test-a")
+	ob := v052Pair(t, url, homeOld, "", "Old", "--handle", "old-bot-q4m8")
 	link := filepath.Join(t.TempDir(), "lnk")
 	if err := os.Symlink(homeOld, link); err != nil {
 		t.Skip(err)

@@ -46,7 +46,7 @@ func joinEventIDs(iw inboxWire) []string {
 
 func TestAdminAwayRebuildsMissedJoins(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.RateInboxPerMin = 100000 })
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.legacy(t, b) // pre-v0.5.0 multi-member bridge
 
 	// Three members join while the admin is away; a fourth joins then leaves.
@@ -56,7 +56,7 @@ func TestAdminAwayRebuildsMissedJoins(t *testing.T) {
 	dan := ts.newMember(t, b, "dan-bot", "192.0.2.13:1")
 
 	// dan leaves before the admin ever sees it (admin kicks / dan departs).
-	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+dan.landID, nil, reqOpts{token: dana.token})
+	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+dan.landID, nil, reqOpts{token: rick.token})
 	if status != http.StatusOK {
 		t.Fatalf("remove dan = %d (%v)", status, m)
 	}
@@ -66,7 +66,7 @@ func TestAdminAwayRebuildsMissedJoins(t *testing.T) {
 	ts.clk.Advance(3*24*time.Hour + time.Second)
 
 	// Admin returns: the missed joins are rebuilt and delivered now.
-	iw := ts.inbox(t, dana.token, b.bridgeID)
+	iw := ts.inbox(t, rick.token, b.bridgeID)
 	joins := joinEvents(iw)
 	got := map[string]bool{}
 	for _, j := range joins {
@@ -88,11 +88,11 @@ func TestAdminAwayRebuildsMissedJoins(t *testing.T) {
 	}
 
 	// Admin acks them; the watermark advances past these joins.
-	ts.ack(t, dana.token, b.bridgeID, joinEventIDs(iw))
+	ts.ack(t, rick.token, b.bridgeID, joinEventIDs(iw))
 
 	// A subsequent fetch (after the lease window) must not re-deliver duplicates.
 	ts.clk.Advance(10 * time.Minute)
-	if j := joinEvents(ts.inbox(t, dana.token, b.bridgeID)); len(j) != 0 {
+	if j := joinEvents(ts.inbox(t, rick.token, b.bridgeID)); len(j) != 0 {
 		t.Fatalf("duplicate joins after ack = %d, want 0", len(j))
 	}
 }
@@ -101,28 +101,28 @@ func TestAdminAwayRebuildsMissedJoins(t *testing.T) {
 
 func TestAdminPresentNoDuplicateJoins(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.RateInboxPerMin = 100000 })
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.legacy(t, b) // pre-v0.5.0 multi-member bridge
 
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.20:1")
 
 	// First poll delivers amy's original notice (not a rebuild).
-	iw := ts.inbox(t, dana.token, b.bridgeID)
+	iw := ts.inbox(t, rick.token, b.bridgeID)
 	joins := joinEvents(iw)
 	if len(joins) != 1 || joins[0].landID != amy.landID || joins[0].rebuilt {
 		t.Fatalf("first poll joins = %+v, want one original for amy", joins)
 	}
-	ts.ack(t, dana.token, b.bridgeID, joinEventIDs(iw))
+	ts.ack(t, rick.token, b.bridgeID, joinEventIDs(iw))
 
 	// Immediately re-polling must not re-deliver the acked join.
 	ts.clk.Advance(10 * time.Minute)
-	if j := joinEvents(ts.inbox(t, dana.token, b.bridgeID)); len(j) != 0 {
+	if j := joinEvents(ts.inbox(t, rick.token, b.bridgeID)); len(j) != 0 {
 		t.Fatalf("joins after ack = %d, want 0", len(j))
 	}
 
 	// A new member joins while the admin is present and polling normally.
 	bob := ts.newMember(t, b, "bob-bot", "192.0.2.21:1")
-	iw = ts.inbox(t, dana.token, b.bridgeID)
+	iw = ts.inbox(t, rick.token, b.bridgeID)
 	joins = joinEvents(iw)
 	if len(joins) != 1 || joins[0].landID != bob.landID {
 		t.Fatalf("bob poll joins = %+v, want one for bob", joins)
@@ -134,7 +134,7 @@ func TestAdminPresentNoDuplicateJoins(t *testing.T) {
 	// Polling again before acking (original still leased, not expired) must not
 	// rebuild a duplicate of the in-flight notice.
 	ts.clk.Advance(10 * time.Minute)
-	if j := joinEvents(ts.inbox(t, dana.token, b.bridgeID)); len(j) != 1 || j[0].landID != bob.landID || j[0].rebuilt {
+	if j := joinEvents(ts.inbox(t, rick.token, b.bridgeID)); len(j) != 1 || j[0].landID != bob.landID || j[0].rebuilt {
 		t.Fatalf("re-poll joins = %+v, want the single original for bob", j)
 	}
 }

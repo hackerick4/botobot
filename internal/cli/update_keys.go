@@ -1,8 +1,8 @@
 package cli
 
 // releasePubKeys are the pinned Ed25519 public keys of the CLI release signing
-// key. The private key is kept offline by the maintainer;
-// it is not on the server, in cloud storage or
+// key (docs/CLI_UPDATE.md). The private key lives only on the release box at
+// ~/.config/bot-bridge/release-signing.key; it is not on the server, in GCS or
 // in CI. To rotate: announce the next key with `--next-pub` in a manifest
 // signed by the current key, then add it here for the following release.
 var releasePubKeys = []string{

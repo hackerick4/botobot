@@ -27,7 +27,7 @@ func closeReasonOf(m map[string]any) string {
 
 func TestPairBridgeCreatedByBothPaths(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 	if pair, max, _ := ts.bridgeRow(t, b.bridgeID); !pair || max != 2 {
 		t.Fatalf("create: pair=%v max=%d, want true 2", pair, max)
 	}
@@ -40,7 +40,7 @@ func TestPairBridgeCreatedByBothPaths(t *testing.T) {
 		t.Fatalf("/join: pair=%v max=%d, want true 2", pair, max)
 	}
 	tok, _ := m["claim_token"].(string)
-	if status, m := ts.claim(t, id, tok, "dana-bot", newTestLand(t), "203.0.113.7:1"); status != http.StatusCreated {
+	if status, m := ts.claim(t, id, tok, "sample-bot", newTestLand(t), "203.0.113.7:1"); status != http.StatusCreated {
 		t.Fatalf("claim = %d %v", status, m)
 	} else if br, _ := m["bridge"].(map[string]any); br["pair"] != true || br["max_lands"] != float64(2) {
 		t.Fatalf("claim bridge out: %v", br)
@@ -49,7 +49,7 @@ func TestPairBridgeCreatedByBothPaths(t *testing.T) {
 
 func TestPairBridgeThirdJoinRefused(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 	if status, m := ts.join(t, b.bridgeID, b.code, "amy-bot", newTestLand(t), "192.0.2.10:1"); status != http.StatusCreated {
 		t.Fatalf("peer join = %d (%v)", status, m)
 	}
@@ -79,7 +79,7 @@ func TestPairBridgeThirdJoinRefused(t *testing.T) {
 
 func TestPairBridgeRotateBeforePeer(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 	fresh := ts.rotateCode(t, b)
 	if status, m := ts.join(t, b.bridgeID, b.code, "amy-bot", newTestLand(t), "192.0.2.20:1"); status != http.StatusUnauthorized || errCode(m) != "join_failed" {
 		t.Fatalf("old code after rotate = %d %q", status, errCode(m))
@@ -91,7 +91,7 @@ func TestPairBridgeRotateBeforePeer(t *testing.T) {
 
 func TestPairBridgeMemberLeaveClosesForBoth(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.30:1")
 	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+amy.landID, nil, reqOpts{token: amy.token})
 	if status != http.StatusOK || m["bridge_closed"] != true {
@@ -100,7 +100,7 @@ func TestPairBridgeMemberLeaveClosesForBoth(t *testing.T) {
 	if _, _, st := ts.bridgeRow(t, b.bridgeID); st != "closed" {
 		t.Fatalf("status = %s", st)
 	}
-	for _, tok := range []string{dana.token, amy.token} {
+	for _, tok := range []string{rick.token, amy.token} {
 		status, m, _ := ts.do(t, http.MethodGet, "/v1/bridges/"+b.bridgeID+"/inbox", nil, reqOpts{token: tok})
 		if status != http.StatusGone || closeReasonOf(m) != "member_left" {
 			t.Fatalf("inbox after leave = %d %v, want 410 member_left", status, m)
@@ -110,9 +110,9 @@ func TestPairBridgeMemberLeaveClosesForBoth(t *testing.T) {
 
 func TestPairBridgeKickClosesForBoth(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.40:1")
-	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+amy.landID, nil, reqOpts{token: dana.token})
+	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+amy.landID, nil, reqOpts{token: rick.token})
 	if status != http.StatusOK || m["bridge_closed"] != true {
 		t.Fatalf("kick = %d %v, want bridge_closed", status, m)
 	}
@@ -120,10 +120,11 @@ func TestPairBridgeKickClosesForBoth(t *testing.T) {
 	if status != http.StatusGone || closeReasonOf(m) != "member_removed" {
 		t.Fatalf("kicked inbox = %d %v, want 410 member_removed", status, m)
 	}
-	// A closed pair bridge takes no new peer even with a fresh-looking code.
+	// A closed pair bridge takes no new peer even with a fresh-looking code,
+	// and (v0.6.6) answers like an unknown bridge to a caller with no key.
 	status, m = ts.join(t, b.bridgeID, b.code, "zoe-bot", newTestLand(t), "192.0.2.41:1")
-	if status != http.StatusGone {
-		t.Fatalf("join closed = %d %v, want 410", status, m)
+	if status != http.StatusUnauthorized || errCode(m) != "join_failed" {
+		t.Fatalf("join closed = %d %v, want 401 join_failed", status, m)
 	}
 }
 
@@ -131,7 +132,7 @@ func TestPairBridgeKickClosesForBoth(t *testing.T) {
 // rules: more members, rotate after joins, a member leaving closes nothing.
 func TestLegacyBridgeGrandfathered(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	ts.legacy(t, b)
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.50:1")
 	ts.newMember(t, b, "zoe-bot", "192.0.2.51:1")
@@ -142,14 +143,14 @@ func TestLegacyBridgeGrandfathered(t *testing.T) {
 	if _, _, st := ts.bridgeRow(t, b.bridgeID); st != "active" {
 		t.Fatalf("legacy status = %s", st)
 	}
-	ts.inbox(t, dana.token, b.bridgeID)
+	ts.inbox(t, rick.token, b.bridgeID)
 }
 
 func TestHealthzSchemaVersion7(t *testing.T) {
 	ts := newIntegServer(t, nil)
 	status, body, _ := ts.do(t, http.MethodGet, "/healthz", nil, reqOpts{})
-	if status != http.StatusOK || body["schema_version"] != float64(9) {
-		t.Fatalf("healthz = %d %v, want schema_version 9", status, body)
+	if status != http.StatusOK || body["schema_version"] != float64(10) {
+		t.Fatalf("healthz = %d %v, want schema_version 10", status, body)
 	}
 }
 
@@ -157,7 +158,7 @@ func TestHealthzSchemaVersion7(t *testing.T) {
 // turned on (v0.5.0 audit).
 func TestPairBridgeNoMemberInviteSetting(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 	body := map[string]any{"settings": map[string]any{"lands_can_invite": true}}
 	status, m, _ := ts.do(t, http.MethodPatch, "/v1/bridges/"+b.bridgeID, body, reqOpts{token: b.token})
 	if status != http.StatusBadRequest {

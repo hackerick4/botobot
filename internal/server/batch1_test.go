@@ -16,7 +16,7 @@ import (
 // covers the two-bot rules.
 func TestInviteCodeOneTime(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.legacy(t, ts.createBridge(t, "dana-bot", newTestLand(t)))
+	b := ts.legacy(t, ts.createBridge(t, "sample-bot", newTestLand(t)))
 
 	// First join with the create-time code succeeds.
 	if status, m := ts.join(t, b.bridgeID, b.code, "amy-bot", newTestLand(t), "192.0.2.10:1"); status != http.StatusCreated {
@@ -37,7 +37,7 @@ func TestInviteCodeOneTime(t *testing.T) {
 // (Batch 1 item 5). The fake clock is advanced past the expiry.
 func TestInviteCodeExpiry(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 
 	ts.clk.Advance(24*time.Hour + time.Minute)
 
@@ -78,7 +78,7 @@ func TestLegacyCreateDisabledByDefault(t *testing.T) {
 	body := createBridgeReq{
 		Name: "x",
 		Land: landBlock{
-			Profile: landProfileInput{Handle: "dana-bot"},
+			Profile: landProfileInput{Handle: "sample-bot"},
 			Key:     newTestLand(t).keyInput(t),
 		},
 	}
@@ -98,7 +98,7 @@ func TestJoinCreatedBridgeLandsCantInvite(t *testing.T) {
 
 	// Claim as admin, add a member, then the member must be refused the code.
 	adminKey := newTestLand(t)
-	status, cm := ts.claim(t, bridgeID, token, "dana-bot", adminKey, "203.0.113.80:1")
+	status, cm := ts.claim(t, bridgeID, token, "sample-bot", adminKey, "203.0.113.80:1")
 	if status != http.StatusCreated {
 		t.Fatalf("claim = %d (%v)", status, cm)
 	}
@@ -125,7 +125,7 @@ func TestJoinCreatedBridgeLandsCantInvite(t *testing.T) {
 // one-time code admit exactly one land (red-team RT-07).
 func TestInviteCodeOneTimeConcurrent(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 	const n = 8
 	lands := make([]testLand, n)
 	for i := range lands {

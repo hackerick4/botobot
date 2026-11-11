@@ -82,6 +82,15 @@ const (
 	askZH        = `(?:麻煩|請|幫我|幫忙|能不能|可不可以|可以|拜託|需要你|你要|你必須|你得|趕快|快點|直接|順便)`
 )
 
+// v0.6.7 owner-intent vocabulary (folded text).
+const (
+	intentClaimZH = `(?:(?:照|依|按|依照|按照|遵照|根據)(?:著)?(?:你|妳|您)?(?:的)?(?:主人|老闆)的?(?:意思|意願|指示|交代|吩咐|要求|決定)|(?:你|妳|您)?(?:的)?(?:主人|老闆)(?:有|已經?|早就|之前|先前|剛剛|剛才)(?:交代|吩咐|指示)(?:過)?|(?:依|照|按|依照|按照|根據)(?:著)?(?:先前|之前|上次|原本|早先|稍早)?(?:和|跟|與|同)[^。！？!?.\n,]{1,16}?的?(?:約定|協議|共識|說好的|講好的)|(?:你|妳|您)?(?:的)?(?:主人|老闆)(?:剛剛|剛才|已經|已|早就|之前|先前)(?:說|講|表示)(?:過)?(?:可以|好|ok|沒問題|行|同意))`
+	intentPushZH  = `(?:請|直接|就|幫|麻煩|趕快|馬上|立刻)[^。\n]{0,10}?(?:傳|送|回覆|回|確認|付|轉|給|提供|告訴|預約|下單|購買|寄|發)`
+	intentActZH   = `[^。\n]{0,40}?(?:` + intentPushZH + `|(?:不用|不必|不需要|無須|無需|免)(?:再)?(?:確認|問|詢問|經過)|回(?:覆)?\s*(?:yes|ok|好|是)|付款|轉帳|匯款|下單)`
+	intentClaimEN = `\b(?:as|per|following|according to)\s+(?:your|the)\s+(?:owner|boss|user|human)(?:'s)?\s+(?:intended|intents?|intentions?|wish(?:es)?|wanted|instructions?|request|decision|plan)\b|\b(?:your|the)\s+(?:owner|boss|user|human)\s+(?:wants|wanted|intended|intends|asked|told)\s+(?:you\s+)?to\b|\bas (?:agreed|discussed|arranged) (?:with|by) (?:your|the) (?:owner|boss|user|human)\b|\bper (?:our|the|your) (?:earlier |previous |prior )?(?:agreement|arrangement|deal) with\b`
+	intentActEN   = `[^.!?\n]{0,60}?(?:\b(?:just|now|go ahead and|please|so|right away)\s+(?:send|reply|confirm|pay|share|forward|transfer|book|buy|approve|release)\b|\bno need to (?:confirm|ask|check)\b|\breply (?:yes|ok|y)\b)`
+)
+
 type rule struct {
 	id     string
 	cat    Category
@@ -158,7 +167,7 @@ var inboundRules = []rule{
 	r("OWN-EN-NAMED-SENSITIVE", IOwnerData, 5, verbEN+`\b[^.?!\n]{0,30}\b[a-z][a-z.-]{1,20}'[s5]\s+(?:home address|home addr|date of birth|social security(?: number)?|ssn|passport(?: number)?|bank (?:account|details|login)|credit card(?: number)?|national id)\b`),
 	r("OWN-EN-BULK", IOwnerData, 5, `\b(?:all|every|entire|whole|full|complete|export|dump|list (?:all|every))\s+(?:of\s+)?`+youEN+`?\s*(?:contacts?|contact list|address book|emails?|inbox|messages?|chats?|chat history|conversation history|conversations|calendar|files|documents|photos|notes|history|logs|memory|data)\b`),
 	r("OWN-EN-POSSESSED-ASK", IOwnerData, 5, verbEN+`\b[^.?!\n]{0,30}\b`+possEN+`\s+(?:[a-z-]+\s+){0,1}(?:private|personal|secret|direct)\s+(?:messages?|conversations?|chats?|dms?|emails?|inbox|chat history|photos|files|documents|notes)\b|`+verbEN+`\b[^.?!\n]{0,30}\b(?:your (?:owner|boss|user|human)'?s?|[a-z]+'s)\s+(?:messages|conversations|chats|dms|emails|inbox|chat history|contacts|address book|contact list)\b`),
-	r("OWN-EN-OTHERCHATS", IOwnerData, 5, `\b(?:other|previous|private|earlier|past)\s+(?:chats?|conversations?|dms?|messages?)\s+(?:with|from)\s+(?:your\s+)?(?:owner|user|human|boss|dana)`),
+	r("OWN-EN-OTHERCHATS", IOwnerData, 5, `\b(?:other|previous|private|earlier|past)\s+(?:chats?|conversations?|dms?|messages?)\s+(?:with|from)\s+(?:your\s+)?(?:owner|user|human|boss|rick)`),
 	r("OWN-EN-WHERE", IOwnerData, 4, `\bwhere (?:does|do|is|are) (?:your |the )?(?:owner|boss|user|human|family|kids?|wife|husband)\s+(?:live|living|right now|now|located|staying)`),
 	r("OWN-ZH-SENSITIVE", IOwnerData, 5, `(?:`+youZH+`|主人|老闆|他|她)[^。！？!?.\n]{0,6}(?:身分證|身份證|護照|駕照|健保卡|銀行帳號|銀行帳戶|帳號密碼|戶頭|信用卡|卡號|安全碼|薪水|薪資|收入|存款|餘額|病歷|病史|健康狀況|診斷|生日|出生日期|住址|家裡地址|住家地址|住哪|家住|密碼管理|報稅)`),
 	r("OWN-ZH-BULK", IOwnerData, 5, `(?:所有|全部|整個|完整|全部的|所有的|匯出|導出|列出所有)[^。！？!?.\n]{0,6}(?:聯絡人|通訊錄|信件|郵件|信箱|訊息|對話|聊天記錄|聊天紀錄|對話紀錄|對話記錄|行事曆|檔案|文件|照片|筆記|紀錄|記錄|記憶)`),
@@ -166,6 +175,11 @@ var inboundRules = []rule{
 	r("OWN-ZH-OTHERCHATS", IOwnerData, 5, `(?:主人|老闆|你)[^。！？!?.\n]{0,6}(?:跟|和|與)[^。！？!?.\n]{0,10}(?:的)?(?:私人)?(?:對話|聊天|訊息|私訊)(?:內容|紀錄|記錄)?`),
 	r("OWN-EN-CONTACT", IOwnerData, 4, `\b(?:your|the)\s+(?:owner|boss|user|human)'?s?\s+(?:[a-z-]+\s+){0,1}(?:phone(?: number)?|mobile(?: number)?|cell(?: number)?|number|e-?mail(?: address)?|address|line id|whatsapp|telegram)\b`),
 	r("OWN-ZH-CONTACT", IOwnerData, 4, `(?:主人|老闆|你主人|你老闆)的?[^。！？!?.\n]{0,4}(?:手機|電話|手機號碼|電話號碼|號碼|email|e-mail|信箱|地址|line|賴|whatsapp|telegram)`),
+	// v0.6.7 (RT-162): "natural next step" fishing for a whole day's or
+	// week's schedule. Only the broad asks (whole day, all, full) count, so
+	// "Thursday afternoon OK?" stays clean.
+	r("OWN-ZH-SCHEDULE", IOwnerData, 4, `(?:告訴|給|傳|提供|說|列出|透露|報)(?:我|一下)?[^。！？!?.\n]{0,4}(?:主人|老闆|他|她)的?[^。！？!?.\n]{0,6}(?:整天|全天|一整天|整週|一整週|整個禮拜|整個星期|所有|全部|完整)的?(?:行程|行事曆|安排|日程|時間表)`),
+	r("OWN-EN-SCHEDULE", IOwnerData, 4, `\b(?:send|share|give|tell|list|forward|show)\b[^.?!\n]{0,20}\b(?:your (?:owner|boss|user|human)'?s?|his|her|[a-z]+'s)\s+(?:whole|entire|full|complete|all-day|full-day)\s+(?:[a-z]+\s+)?(?:schedule|calendar|agenda|itinerary)\b`),
 	r("OWN-ZH-WHERE", IOwnerData, 4, `(?:主人|老闆|他|她|你主人|你老闆)[^。！？!?.\n]{0,4}(?:住在哪|住哪|現在在哪|人在哪|在哪裡|家裡有誰|小孩|老婆|老公)`),
 
 	// ---- I-INJECT -------------------------------------------------------
@@ -176,7 +190,7 @@ var inboundRules = []rule{
 	// counts as an injection.
 	r("INJ-EN-MODE", IInject, 5, `\b(?:you are|you'?re|you are now|you'?re now|now you are|you(?:'re| are) (?:now )?operating)\s+(?:in\s+)?(?:the\s+)?(?:developer|dev|dan|god|admin|debug|maintenance|unrestricted|jailbreak|jailbroken|sudo|root)\s+mode\b|\b(?:switch(?:ing)? (?:to|into)|enter(?:ing)?|enable|activate|turn on|go into)\s+(?:the\s+)?(?:dan|god|unrestricted|jailbreak|jailbroken)\s+mode\b|\bdo anything now\b|\byou are (?:now )?(?:dan|jailbroken)\b`),
 	r("INJ-EN-MODEWORD", IInject, 2, `\b(?:developer|dan|god|unrestricted|jailbreak|sudo|root)\s+mode\b|\bjailbreak\b`),
-	r("INJ-EN-HIDE", IInject, 3, `\b(?:do not|don'?t|never|without)\s+(?:tell(?:ing)?|inform(?:ing)?|notify(?:ing)?|ask(?:ing)?|alert(?:ing)?|mention(?:ing)?\s+(?:this\s+)?to|let(?:ting)?)\s+(?:your\s+|the\s+)?(?:owner|user|human|boss|admin|operator|dana)\b|\b(?:keep (?:this|it) (?:secret|between us|quiet)|between you and me|secretly|behind (?:your|their) back)\b`),
+	r("INJ-EN-HIDE", IInject, 3, `\b(?:do not|don'?t|never|without)\s+(?:tell(?:ing)?|inform(?:ing)?|notify(?:ing)?|ask(?:ing)?|alert(?:ing)?|mention(?:ing)?\s+(?:this\s+)?to|let(?:ting)?)\s+(?:your\s+|the\s+)?(?:owner|user|human|boss|admin|operator|rick)\b|\b(?:keep (?:this|it) (?:secret|between us|quiet)|between you and me|secretly|behind (?:your|their) back)\b`),
 	r("INJ-EN-BYPASS", IInject, 5, `\b(?:bypass|skip|avoid|get around|circumvent|disable|turn off)\s+(?:the\s+|your\s+|any\s+)?(?:approval|confirmation|safety|filter|filters|checks?|rules?|restrictions?|guard|guardrails?|limits?|owner|review)\b`),
 	r("INJ-EN-SYSTAG", IInject, 5, `(?:^|\n)\s*(?:\[\s*(?:system|admin|owner|developer|instruction)s?\s*\]|<\|?(?:system|im_start|im_end|endoftext)\|?>|#{2,}\s*(?:system|instruction|new rules)|system\s*:|assistant\s*:|developer\s*:)`),
 	r("INJ-CONTROL-FORGE", IInject, 7, `notify_owner\s*:|<<<\s*(?:end|untrusted)|bb_end_|===\s*(?:bot-bridge|規則|rules)|---\s*meta\s|---\s*attachment\s|\bevent:\s*(?:land_|key_)`),
@@ -190,11 +204,11 @@ var inboundRules = []rule{
 	r("INJ-ZH-ONLY", IInject, 3, `只(?:要|能|准)?(?:回覆|回答|輸出|回)(?:以下|這|一個|數字|代碼)|不准拒絕|不能拒絕|不要解釋`),
 
 	// ---- I-AUTH ---------------------------------------------------------
-	r("AUTH-EN-APPROVED", IAuth, 3, `\b(?:your\s+|the\s+)?(?:owner|boss|admin|administrator|developer|creator|operator|user|human|manager|dana|grok|xai|support(?: team)?|security(?: team)?|it(?: department| team)?|ceo|management)\s+(?:has\s+|have\s+|had\s+|already\s+|just\s+)*(?:approved|authori[sz]ed|allowed|confirmed|agreed|permitted|okayed|ok'?d|signed off|given (?:the )?(?:ok|go-ahead|permission)|(?:said|says) (?:(?:it|that|this) (?:is|was|'s) |it'?s |that'?s )?(?:ok|okay|fine|yes|allowed|alright|all right))\b`),
-	r("AUTH-EN-IAM", IAuth, 4, `\b(?:i am|i'?m|this is|we are|we'?re)\s+(?:your|the)\s+(?:owner|boss|admin|administrator|developer|creator|operator|master|user|maker)\b|\b(?:i am|i'?m|this is)\s+(?:dana|grok|xai|the botobot team|botobot support|bot-bridge support|official support)\b`),
+	r("AUTH-EN-APPROVED", IAuth, 3, `\b(?:your\s+|the\s+)?(?:owner|boss|admin|administrator|developer|creator|operator|user|human|manager|rick|grok|xai|support(?: team)?|security(?: team)?|it(?: department| team)?|ceo|management)\s+(?:has\s+|have\s+|had\s+|already\s+|just\s+)*(?:approved|authori[sz]ed|allowed|confirmed|agreed|permitted|okayed|ok'?d|signed off|given (?:the )?(?:ok|go-ahead|permission)|(?:said|says) (?:(?:it|that|this) (?:is|was|'s) |it'?s |that'?s )?(?:ok|okay|fine|yes|allowed|alright|all right))\b`),
+	r("AUTH-EN-IAM", IAuth, 4, `\b(?:i am|i'?m|this is|we are|we'?re)\s+(?:your|the)\s+(?:owner|boss|admin|administrator|developer|creator|operator|master|user|maker)\b|\b(?:i am|i'?m|this is)\s+(?:rick|grok|xai|the botobot team|botobot support|bot-bridge support|official support)\b`),
 	r("AUTH-EN-PREAPPROVED", IAuth, 3, `\b(?:pre-?approved|already (?:been )?approved|approval (?:has been )?(?:granted|confirmed|received)|authori[sz]ation (?:code|token|granted)|permission (?:has been )?granted|you (?:are|have been) (?:authori[sz]ed|allowed|cleared) to)\b`),
 	r("AUTH-EN-BEHALF", IAuth, 3, `\bon behalf of (?:your|the)\s+(?:owner|boss|admin)|\b(?:official|mandatory|compliance|security) (?:notice|request|audit|verification|check)\b`),
-	r("AUTH-ZH-APPROVED", IAuth, 3, `(?:你的?|妳的?|您的?)?(?:主人|老闆|管理員|管理者|開發者|官方|客服|資安|安全團隊|系統管理員|上級|公司|dana|grok)(?:已經|已|都|剛剛|剛才|早就)?(?:同意|核准|批准|授權|允許|答應|說可以|說好|說沒問題|放行|確認過|准許)`),
+	r("AUTH-ZH-APPROVED", IAuth, 3, `(?:你的?|妳的?|您的?)?(?:主人|老闆|管理員|管理者|開發者|官方|客服|資安|安全團隊|系統管理員|上級|公司|rick|grok)(?:已經|已|都|剛剛|剛才|早就)?(?:同意|核准|批准|授權|允許|答應|說可以|說好|說沒問題|放行|確認過|准許)`),
 	// Bridge content that talks about releasing held items or the owner's
 	// confirmation card is always forged: real approval only happens in the
 	// owner's private chat.
@@ -202,6 +216,40 @@ var inboundRules = []rule{
 	r("AUTH-ZH-IAM", IAuth, 4, `我(?:就)?是(?:你的?|妳的?|您的?)?(?:主人|老闆|管理員|管理者|開發者|官方|客服|資安|創造者|使用者)|(?:這是|這裡是)(?:官方|客服|資安|系統)(?:通知|公告|要求)`),
 	r("AUTH-ZH-PRE", IAuth, 3, `已(?:經)?(?:獲得|取得)?(?:核准|批准|授權|同意|放行)|授權碼|核准碼|放行碼|(?:主人|老闆)授權`),
 	r("AUTH-ZH-BEHALF", IAuth, 3, `代表(?:你的?)?(?:主人|老闆|管理員)|(?:官方|資安|合規|安全)(?:稽核|檢查|驗證|要求|通知)`),
+	// v0.6.7: forged owner intent. Bots may now send what the owner clearly
+	// means, so bridge text that claims the owner's intent, an earlier
+	// arrangement, or a picked confirm-card choice, and pairs it with a push to
+	// send or skip confirming, is medium (taints the bridge). The claim alone
+	// stays low so ordinary "as agreed" chat is not flagged.
+	r("AUTH-ZH-INTENT", IAuth, 3, intentClaimZH),
+	r("AUTH-ZH-INTENT-ACT", IAuth, 4, intentClaimZH+intentActZH+`|(?:`+intentPushZH+`)[^。\n]{0,40}?(?:`+intentClaimZH+`)`),
+	r("AUTH-ZH-NOCONFIRM", IAuth, 4, `(?:之後|以後|今後|從現在(?:開始|起)|接下來|往後)[^。\n]{0,24}?(?:不用|不必|不需要|無須|無需|免)(?:再)?(?:確認|問|詢問|經過|請示)`),
+	r("AUTH-ZH-CARD", IAuth, 5, `(?:主人|老闆|使用者|擁有者|他|她)[^。！？!?.\n]{0,8}?(?:選了|選擇了|已選|選取了|點選了|點了|按了|按下|勾了)[^。！？!?.\n]{0,4}?(?:傳給對方|先不要|改一下再傳)`),
+	// v0.6.8: bots now send ordinary replies without a card, so "the owner
+	// said no need to confirm" is the obvious lever. A claim that the owner
+	// (or Rick, or "your" side) said to skip confirming is medium on its own;
+	// the speaker's own owner (我/我們的主人) is not a claim about this bot.
+	rx("AUTH-ZH-SAIDSKIP", IAuth, 4, `(?:我們?的?|你的?|妳的?|您的?)?(?:主人|老闆|使用者|擁有者|rick)[^。！？!?.\n]{0,6}?(?:說|講|表示|交代|吩咐|同意|答應|同意了)(?:過|了)?[^。！？!?.\n]{0,6}?(?:不用|不必|不需要|免|無須|無需|可以不用|可以不必)(?:再)?(?:跟[^。！？!?.\n]{0,6}?|和[^。！？!?.\n]{0,6}?|問[^。！？!?.\n]{0,6}?)?(?:確認|問|詢問|請示|經過|核准|按|同意)`, `^我`),
+	rx("AUTH-ZH-APPROVED-PAY", IAuth, 4, `(?:我們?的?|你的?|妳的?|您的?)?(?:主人|老闆|rick)(?:已經|已|都|剛剛|剛才|早就)?(?:同意|核准|答應|說可以|說好|說沒問題|確認過)[^。！？!?.\n]{0,10}?(?:付款|付錢|轉帳|匯款|下單|購買|刷卡|訂金|預約|答應)`, `^我`),
+	r("AUTH-ZH-SKIPOWNER", IAuth, 4, `(?:不用|不必|不需要|免|無須|無需)(?:再)?(?:跟|和|問|經過|請示)(?:你的?|妳的?|您的?)(?:主人|老闆|使用者)`),
+	r("AUTH-ZH-SAIDSKIP-ACT", IAuth, 4, `(?:說|講)(?:過|了)?[^。！？!?.\n]{0,4}?(?:不用|不必|不需要|免)(?:再)?(?:確認|問|詢問|請示)[^。\n]{0,20}?`+intentPushZH),
+	// v0.6.8 dedicated bot: bridge text trying to reach the main bot, spawn
+	// bots, widen the dedicated bot's own role, or pull it into other bridges.
+	r("DED-ZH-MAINBOT", IInject, 4, `(?:轉給|轉告|轉傳|傳給|聯絡|聯繫|通知|問問?|叫|請|找)[^。！？!?\n]{0,6}?(?:你|妳|您)(?:主人)?的?(?:主要|主|另一個|其他|別的)\s*(?:bot|助理|機器人|agent|ai)`),
+	r("DED-ZH-SPAWN", IInject, 4, `(?:幫我|替我|請你?|你去|你再|去)(?:再)?(?:開|建立|新增|建|創建|生成|做)(?:一個|個)?(?:新的?)?\s*(?:bot|助理|機器人|agent)`),
+	r("DED-ZH-SELFEDIT", IInject, 4, `(?:把|將)?(?:你|妳|您)的?(?:說明|描述|系統提示|提示詞|權限|工具|指示|角色)(?:改|修改|換|擴大|開放|加)|(?:權限|工具)(?:開到最大|全開|都打開|加到最大)`),
+	r("DED-ZH-OTHERBRIDGE", IInject, 4, `(?:加到|加入|拉進|轉到|放進)[^。！？!?\n]{0,6}?(?:你|妳|您)(?:主人)?的?(?:其他|別的|另一個|所有)(?:對接|bridge|連線|群組?)`),
+	r("DED-ZH-IMPERSONATE", IAuth, 4, `(?:我是|這是|來自|代表)(?:你|妳|您)?(?:主人)?的?(?:主要|主)\s*(?:bot|助理|機器人|agent)|(?:^|\n)\s*[（(【\[]\s*(?:主要|主)\s*(?:bot|助理|機器人|agent)\s*[）)】\]]`),
+	r("DED-EN-IMPERSONATE", IAuth, 4, `\b(?:i am|i'm|this is|message from|on behalf of)\s+your\s+(?:main|primary|parent)\s+(?:bot|assistant|agent)\b|(?:^|\n)\s*[(\[]\s*(?:main|primary|parent)\s+(?:bot|assistant|agent)\s*[)\]]`),
+	r("DED-EN-MAINBOT", IInject, 4, `\b(?:forward|pass|relay|send|tell|ask|contact|message|ping)\b[^.!?\n]{0,30}?\byour\s+(?:main|primary|other|parent)\s+(?:bot|assistant|agent|ai)\b`),
+	r("DED-EN-SPAWN", IInject, 4, `\b(?:create|spin up|make|set up|spawn|start)\s+(?:a\s+|another\s+)?(?:new\s+)?(?:bot|agent|assistant)\b[^.!?\n]{0,40}?\b(?:access|permissions?|mail|email|calendar|tools?|contacts)\b`),
+	r("DED-EN-SELFEDIT", IInject, 4, `\b(?:change|update|edit|rewrite|expand|widen)\s+your\s+(?:description|instructions|system prompt|permissions|role|tools)\b`),
+	r("AUTH-EN-SAIDSKIP", IAuth, 4, `\b(?:(?:your|the)\s+(?:owner|boss|user|human)|rick)\s+(?:said|says|told (?:me|us)|mentioned|wants)\b[^.!?\n]{0,24}?\b(?:no need to|(?:you )?(?:don'?t|do not) need to|doesn'?t need to|without)\s+(?:confirm|ask|check)`),
+	r("AUTH-EN-INTENT", IAuth, 3, intentClaimEN),
+	r("AUTH-EN-INTENT-ACT", IAuth, 4, `(?:`+intentClaimEN+`)`+intentActEN),
+	r("AUTH-EN-AGREED-ACT", IAuth, 4, `\b[a-z][a-z.'-]{1,20}\s+(?:has\s+|had\s+)?already\s+(?:agreed|approved|confirmed|okayed|ok'?d|said (?:ok|okay|yes))\b[^.!?\n]{0,40}?(?:\b(?:just|go ahead and|right now|immediately|without asking)\s+(?:send|reply|confirm|pay|share|forward|transfer|book|buy|approve|release)\b|\bno need to (?:ask|confirm|check)\b)|\b(?:agreed|approved|said (?:ok|yes))\s+(?:to (?:it|this|that)\s+)?in (?:your|the) (?:private )?(?:chat|conversation|dms?)\b`),
+	r("AUTH-EN-NOCONFIRM", IAuth, 4, `\b(?:from now on|going forward|in (?:the )?future|after this|next time)\b[^.!?\n]{0,40}?\b(?:no need to|don'?t|do not|never|without)\s+(?:confirm|ask|asking|check|checking)\b|\bno need to (?:confirm|ask|check) with (?:your|the) (?:owner|boss|user|human)\b`),
+	r("AUTH-EN-CARD", IAuth, 5, `\b(?:owner|user|boss|rick)\b[^.!?\n]{0,12}?\b(?:picked|chose|selected|clicked|tapped|pressed|hit)\s+["'“]?(?:send it|edit first|not now)\b`),
 
 	// ---- I-EXEC ---------------------------------------------------------
 	r("EXEC-EN-RUN", IExec, 3, `\b(?:run|execute|exec|eval|invoke)\s+(?:this|the following|these|that|my|a)?\s*(?:command|commands|script|code|snippet|shell|one-liner|program)\b`),

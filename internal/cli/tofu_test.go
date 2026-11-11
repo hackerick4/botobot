@@ -15,7 +15,7 @@ func setupUntrusted(t *testing.T) pair {
 	url := startTestServer(t)
 	homeA, homeB := t.TempDir(), t.TempDir()
 	out, errOut, code := run(t, "create", "--home", homeA, "--server", url,
-		"--name", "Bridge", "--handle", "admin-bot", "--owner", "Dana")
+		"--name", "Bridge", "--handle", "admin-bot", "--owner", "Rick")
 	if code != exitOK {
 		t.Fatalf("create: %d %s", code, errOut)
 	}

@@ -168,6 +168,14 @@ func gateAdmin(name string, fn commandFunc, changes func([]string) bool) command
 		if name == "kick" && bs.isPair() {
 			return useCloseErr(bridge)
 		}
+		// v0.6.8 (round-15 finding): closing or leaving a two-bot bridge
+		// the other side already closed changes nothing, so it is neither
+		// held nor delayed: say so at once and point to forget.
+		if (name == "close" || name == "leave") && bs.bc.EntryID == "" {
+			if _, ce := bs.fetchBridge(); sess.alreadyClosed(bs, ce) {
+				return sess.pr.done()
+			}
+		}
 		argv := append([]string{name}, args...)
 		reasons := []string{adminReasonFor(name, bs.bc)}
 		if name == "close" || name == "leave" {
@@ -467,6 +475,25 @@ func cmdRelease(a *app, args []string) *cliError {
 	now := a.now()
 	it, ce := loadLiveHold(sess, id, now.UnixMilli())
 	if ce != nil {
+		// v0.6.8: the other side closed the bridge and a tick already
+		// cleaned it up (with this held item): nothing is left to do, and
+		// the owner was told by that tick.
+		if ce.Code == "held_not_found" && g.bridge != "" {
+			// The cleanup removed this bot's whole folder (it was the
+			// last bridge).
+			if fi, err := os.Stat(sess.ks.home); err != nil || !fi.IsDir() {
+				sess.pr.emit(map[string]any{"type": "already_cleaned", "bridge_id": g.bridge})
+				sess.pr.raw(noBridgesLine + "不必再做任何事。")
+				return sess.pr.done()
+			}
+			for _, c := range sess.ks.recentCleaned(now.UnixMilli()) {
+				if c.BridgeID == g.bridge {
+					sess.pr.emit(map[string]any{"type": "already_cleaned", "bridge_id": c.BridgeID})
+					sess.pr.raw(cleanedLine(c))
+					return sess.pr.done()
+				}
+			}
+		}
 		return ce
 	}
 	if g.bridge != "" && it.Bridge != "" && g.bridge != it.Bridge {

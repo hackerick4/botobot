@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -15,7 +16,7 @@ func claimFresh(t *testing.T, url string) (link, code, out, homeA string) {
 	code, _ = created["invite_code"].(string)
 	token, _ := created["claim_token"].(string)
 	homeA = t.TempDir()
-	out, errOut, rc := run(t, "claim", "--home", homeA, "--link", link, "--token", token, "--handle", "dana-bot", "--owner", "Dana")
+	out, errOut, rc := run(t, "claim", "--home", homeA, "--link", link, "--token", token, "--handle", "sample-bot", "--owner", "Rick")
 	if rc != exitOK {
 		t.Fatalf("claim exit %d, stderr=%s", rc, errOut)
 	}
@@ -51,8 +52,95 @@ func TestClaimPrintsOnboarding(t *testing.T) {
 		t.Errorf("invite block = %q", msg)
 	}
 	// TOFU without prompts: the owner is never asked to compare fingerprints.
-	if n := rawLine(out, "NOTIFY_OWNER: "); strings.Contains(n, fp) || !strings.HasSuffix(n, "已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。") || !strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionZH) || strings.Contains(out, "NOTIFY_OWNER: bridge br_") {
+	if n := rawLine(out, "NOTIFY_OWNER: "); strings.Contains(n, fp) || !strings.HasSuffix(n, "已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。") || !strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionZH) || strings.Contains(out, "NOTIFY_OWNER: bridge br_") {
 		t.Errorf("owner notice = %q", n)
+	}
+}
+
+// A fresh claim (no prior routine) prints ready-to-paste ROUTINE_CREATE params
+// so the assistant can create the "bot-bridge inbox" routine in one turn: valid
+// JSON with the fixed name, the 5-minute cadence, and the exact ROUTINE_PROMPT
+// text as the prompt (warm08 claim->routine turn cut).
+func TestClaimPrintsRoutineCreateParams(t *testing.T) {
+	url := startTestServer(t)
+	_, code, out, _ := claimFresh(t, url)
+	line := rawLine(out, "ROUTINE_CREATE: ")
+	if line == "" {
+		t.Fatalf("no ROUTINE_CREATE line:\n%s", out)
+	}
+	spec, err := parseRoutineCreate(line)
+	if err != nil {
+		t.Fatalf("ROUTINE_CREATE not valid JSON (%v): %q", err, line)
+	}
+	if spec.Name != "bot-bridge inbox" || spec.EveryMinutes != 5 || spec.PollIntervalSec != 300 {
+		t.Errorf("ROUTINE_CREATE params = %+v", spec)
+	}
+	// A fresh bot (no prior bridge, no entry) creates outright: no reuse to confirm.
+	if spec.ReuseIfConfirmed {
+		t.Errorf("fresh claim: reuse_if_confirmed should be false, got %+v", spec)
+	}
+	// The prompt must be exactly the ROUTINE_PROMPT line (and the JSON result).
+	if rp := rawLine(out, "ROUTINE_PROMPT: "); spec.Prompt != rp || spec.Prompt == "" {
+		t.Errorf("ROUTINE_CREATE prompt %q != ROUTINE_PROMPT %q", spec.Prompt, rp)
+	}
+	// It must sit between ROUTINE_PROMPT and the NEXT prose.
+	if strings.Index(out, "ROUTINE_CREATE: ") < strings.Index(out, "ROUTINE_PROMPT: ") {
+		t.Error("ROUTINE_CREATE printed before ROUTINE_PROMPT")
+	}
+	// No secrets ever: the line is only the tick command, no invite code.
+	if strings.Contains(line, "邀請碼") || (code != "" && strings.Contains(line, code)) {
+		t.Error("ROUTINE_CREATE must not carry the invite code")
+	}
+}
+
+type routineCreateSpec struct {
+	Name             string `json:"name"`
+	EveryMinutes     int    `json:"every_minutes"`
+	PollIntervalSec  int    `json:"poll_interval_sec"`
+	Prompt           string `json:"prompt"`
+	ReuseIfConfirmed bool   `json:"reuse_if_confirmed"`
+}
+
+func parseRoutineCreate(line string) (routineCreateSpec, error) {
+	var s routineCreateSpec
+	err := json.Unmarshal([]byte(line), &s)
+	return s, err
+}
+
+// warm09 fix: the ROUTINE_CREATE line must ALSO appear when the bot has a prior
+// bridge (returning users / test bots), with reuse_if_confirmed:true so the
+// assistant still confirms an existing enabled routine before creating — the
+// earlier "fresh only" gate meant the line almost never showed for real bots.
+func TestRoutineCreateReuseFlagOnPriorBridge(t *testing.T) {
+	url := startTestServer(t)
+	_, _, _, home := claimFresh(t, url)
+
+	// Second bridge for the same bot (same home) -> prior > 0.
+	o2, e, c := run(t, "claim", "--new", "--server", url, "--home", home,
+		"--name", "Second", "--owner", "Rick")
+	if c != exitOK {
+		t.Fatalf("second claim: %d %s", c, e)
+	}
+	line := rawLine(o2, "ROUTINE_CREATE: ")
+	if line == "" {
+		t.Fatalf("prior-bridge claim did not print ROUTINE_CREATE:\n%s", o2)
+	}
+	spec, err := parseRoutineCreate(line)
+	if err != nil {
+		t.Fatalf("ROUTINE_CREATE not valid JSON (%v): %q", err, line)
+	}
+	if !spec.ReuseIfConfirmed {
+		t.Errorf("prior-bridge claim: reuse_if_confirmed should be true, got %+v", spec)
+	}
+	if spec.Name != "bot-bridge inbox" || spec.EveryMinutes != 5 || spec.PollIntervalSec != 300 {
+		t.Errorf("ROUTINE_CREATE params = %+v", spec)
+	}
+	if rp := rawLine(o2, "ROUTINE_PROMPT: "); spec.Prompt != rp || spec.Prompt == "" {
+		t.Errorf("ROUTINE_CREATE prompt %q != ROUTINE_PROMPT %q", spec.Prompt, rp)
+	}
+	// The conditional-reuse NEXT prose must still be present (no duplicate induced).
+	if !strings.Contains(o2, "NEXT:") {
+		t.Errorf("prior-bridge claim missing NEXT reuse prose:\n%s", o2)
 	}
 }
 
@@ -153,7 +241,7 @@ func TestJoinInviteStdinFlow(t *testing.T) {
 }
 
 func TestParseInvite(t *testing.T) {
-	good := "bot-bridge 邀請。請將整段交給 Grok Bot：\nbridge 連結：https://botobot.app/b/br_ABCDEFGHIJKLMNOPQRSTUV\n邀請碼（請保密）：482913\n加入說明：https://botobot.app/join.md\n安全：x\n管理者指紋：12345 67890 12345 67890 12345 67890"
+	good := "bot-bridge 邀請。請將整段交給 AI 助理：\nbridge 連結：https://botobot.app/b/br_ABCDEFGHIJKLMNOPQRSTUV\n邀請碼（請保密）：482913\n加入說明：https://botobot.app/join.md\n安全：x\n管理者指紋：12345 67890 12345 67890 12345 67890"
 	l, c, fp, err := parseInvite(good)
 	if err != nil || l != "https://botobot.app/b/br_ABCDEFGHIJKLMNOPQRSTUV" || c != "482913" || fp != "123456789012345678901234567890" {
 		t.Fatalf("parseInvite = %q %q %q %v", l, c, fp, err)
@@ -271,7 +359,7 @@ func TestClaimExpiredMessage(t *testing.T) {
 	url := startTestServer(t)
 	created := postJoin(t, url)
 	link, _ := created["invite_link"].(string)
-	_, errOut, rc := run(t, "claim", "--home", t.TempDir(), "--link", link, "--token", "bbc_"+strings.Repeat("A", 43), "--handle", "dana-bot", "--owner", "Dana")
+	_, errOut, rc := run(t, "claim", "--home", t.TempDir(), "--link", link, "--token", "bbc_"+strings.Repeat("A", 43), "--handle", "sample-bot", "--owner", "Rick")
 	if rc == exitOK || !strings.Contains(errOut, "claim --new") || !strings.Contains(errOut, "30 minutes") {
 		t.Fatalf("rc=%d err=%s", rc, errOut)
 	}

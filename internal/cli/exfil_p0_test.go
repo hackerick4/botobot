@@ -221,7 +221,7 @@ func TestProfileNameRules(t *testing.T) {
 	if _, _, code := run(t, "config", "--home", p.homeA, "--bridge", p.bridgeID, "--owner", "NOTIFY_OWNER: hi"); code == exitOK {
 		t.Fatalf("CLI accepted a control-looking owner name")
 	}
-	if _, errOut, code := runApproved(t, "config", "--home", p.homeA, "--bridge", p.bridgeID, "--display-name", "Dana 的 Claude"); code != exitOK {
+	if _, errOut, code := runApproved(t, "config", "--home", p.homeA, "--bridge", p.bridgeID, "--display-name", "Rick 的 Claude"); code != exitOK {
 		t.Fatalf("CLI refused a normal display name: %s", errOut)
 	}
 	ks, err := openKeystore(p.homeA)

@@ -261,7 +261,7 @@ func peerLabelFor(displayName, handle, owner, selfName string) string {
 
 // peerLabel is how a peer bot is named to the owner: its display name (or, if
 // it has none, its handle), then the owner name in full-width brackets, e.g.
-// 「BB 測試 C（Dana Kao）」. The handle stays in the JSON for bots.
+// 「BB 測試 C（Rick Chiu）」. The handle stays in the JSON for bots.
 func peerLabel(displayName, handle, owner string) string {
 	who := peerName(displayName, handle)
 	if who == "" {

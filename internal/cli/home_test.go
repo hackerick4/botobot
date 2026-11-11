@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// Dana's setup: two bots on one computer, no --home given. The admin bot's
+// Rick's setup: two bots on one computer, no --home given. The admin bot's
 // state is in the old shared ~/.bot-bridge; the member bot joining the same
 // bridge must get its own folder, both directions must deliver, and one
 // bridge's release notice must not show up in another bridge's tick.
@@ -18,8 +18,8 @@ func TestTwoBotsOneComputer(t *testing.T) {
 	t.Setenv("BB_HOME", "")
 	root := filepath.Join(userHome, ".bot-bridge")
 
-	// Admin (Home-Panel): an old install that used ~/.bot-bridge.
-	out, errOut, code := run(t, "create", "--home", root, "--server", url, "--name", "Dash", "--handle", "dana-kao-bot", "--owner", "Dana")
+	// Admin (an older bot): an old install that used ~/.bot-bridge.
+	out, errOut, code := run(t, "create", "--home", root, "--server", url, "--name", "Dash", "--handle", "rick-chiu-bot", "--owner", "Rick")
 	if code != exitOK {
 		t.Fatalf("create: %d %s", code, errOut)
 	}
@@ -28,28 +28,28 @@ func TestTwoBotsOneComputer(t *testing.T) {
 	link, _ := c["invite_link"].(string)
 	inv, _ := c["invite_code"].(string)
 	// It also has an older bridge it will close.
-	out, _, _ = run(t, "create", "--home", root, "--server", url, "--name", "Old", "--handle", "dana-kao-bot")
+	out, _, _ = run(t, "create", "--home", root, "--server", url, "--name", "Old", "--handle", "rick-chiu-bot")
 	oldBr, _ := findLine(t, out, "created")["bridge_id"].(string)
 
 	// Member (dashboard-client) joins with an explicit shared home: refused.
-	_, errOut, code = run(t, "join", "--home", root, "--link", link, "--code", inv, "--handle", "dana-panel-bot")
+	_, errOut, code = run(t, "join", "--home", root, "--link", link, "--code", inv, "--handle", "rick-dashboard-bot")
 	if code != exitUsage || !strings.Contains(errOut, "already_joined") {
 		t.Fatalf("join into the admin's folder must be refused: %d %s", code, errOut)
 	}
 	if _, err := os.Stat(filepath.Join(root, br, "bridge.json")); err != nil {
 		t.Fatalf("admin state was touched: %v", err)
 	}
-	// Default: the member gets ~/.bot-bridge/bots/dana-panel-bot.
-	out, errOut, code = run(t, "join", "--link", link, "--code", inv, "--handle", "dana-panel-bot", "--owner", "Dana")
+	// Default: the member gets ~/.bot-bridge/bots/rick-dashboard-bot.
+	out, errOut, code = run(t, "join", "--link", link, "--code", inv, "--handle", "rick-dashboard-bot", "--owner", "Rick")
 	if code != exitOK {
 		t.Fatalf("member join: %d %s", code, errOut)
 	}
-	memberHome := filepath.Join(root, "bots", "dana-panel-bot")
+	memberHome := filepath.Join(root, "bots", "rick-dashboard-bot")
 	if r := rawLine(out, "ROUTINE_PROMPT: "); !strings.Contains(r, "BB_HOME="+memberHome+" bot-bridge-cli tick；") {
 		t.Fatalf("routine line must carry the member's BB_HOME: %q", r)
 	}
 	// A different bot in a folder that belongs to someone else: refused.
-	_, errOut, code = run(t, "create", "--home", memberHome, "--server", url, "--name", "X", "--handle", "dana-kao-bot")
+	_, errOut, code = run(t, "create", "--home", memberHome, "--server", url, "--name", "X", "--handle", "rick-chiu-bot")
 	if code != exitUsage || !strings.Contains(errOut, "identity_conflict") {
 		t.Fatalf("identity conflict not refused: %d %s", code, errOut)
 	}
@@ -81,7 +81,7 @@ func TestTwoBotsOneComputer(t *testing.T) {
 	if strings.Contains(a2, "已放行") || strings.Contains(m2, "已放行") {
 		t.Fatalf("release notice leaked into another bridge:\nadmin:\n%s\nmember:\n%s", a2, m2)
 	}
-	// The member releases a held action of its own (item 4 of Dana's report:
+	// The member releases a held action of its own (item 4 of Rick's report:
 	// the admin's routine flagged the member's release). The admin never sees it;
 	// the member's own tick does.
 	if _, e, c := runApproved(t, "config", "--home", memberHome, "--bridge", br, "--display-name", "Dashboard"); c != exitOK {

@@ -13,7 +13,7 @@ import (
 func TestClaimNew(t *testing.T) {
 	url := startTestServer(t)
 	homeA := t.TempDir()
-	out, errOut, rc := run(t, "claim", "--new", "--server", url, "--home", homeA, "--name", "研究小組", "--handle", "dana-bot", "--owner", "Dana")
+	out, errOut, rc := run(t, "claim", "--new", "--server", url, "--home", homeA, "--name", "研究小組", "--handle", "sample-bot", "--owner", "Rick")
 	if rc != exitOK {
 		t.Fatalf("claim --new exit %d: %s", rc, errOut)
 	}

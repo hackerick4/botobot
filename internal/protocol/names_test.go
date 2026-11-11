@@ -3,7 +3,7 @@ package protocol
 import "testing"
 
 func TestNormalizeProfileName(t *testing.T) {
-	ok := []string{"", "Dana", "Dana 的 Claude", "Ana-María O'Neil", "小明·助理", "Bot (v2)", "  padded  ", "ใจดี", "Zoë"}
+	ok := []string{"", "Rick", "Rick 的 Claude", "Ana-María O'Neil", "小明·助理", "Bot (v2)", "  padded  ", "ใจดี", "Zoë"}
 	for _, s := range ok {
 		if _, err := NormalizeProfileName("display_name", s); err != nil {
 			t.Errorf("%q rejected: %v", s, err)

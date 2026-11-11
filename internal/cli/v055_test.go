@@ -8,7 +8,7 @@ import (
 
 // Item 1 (v0.5.5): the claim notice names the bridge, made safe.
 func TestClaimNoticeName(t *testing.T) {
-	const tail = "已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。"
+	const tail = "已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。"
 	for in, want := range map[string]string{
 		"報價討論": "「報價討論」" + tail,
 		"":     claimNoticeZH,
@@ -23,7 +23,7 @@ func TestClaimNoticeName(t *testing.T) {
 			t.Errorf("claimNotice(%q) = %q, want %q", in, got, want)
 		}
 	}
-	if got := claimNotice(`Quote "x" check`, "en"); got != `"Quote x check" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own Grok Bot.` {
+	if got := claimNotice(`Quote "x" check`, "en"); got != `"Quote x check" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant.` {
 		t.Errorf("en: %q", got)
 	}
 	if claimNotice("", "en") != claimNoticeEN || claimPendingNotice("", "zh-TW") != "bridge 已建立，邀請稍後補上。" || claimPendingNotice("甲", "zh-TW") != "「甲」已建立，邀請稍後補上。" {
@@ -36,11 +36,11 @@ func TestClaimNoticeName(t *testing.T) {
 func TestClaimNamesAndCreatedAt(t *testing.T) {
 	url := startTestServer(t)
 	homeA := t.TempDir()
-	out1, e1, rc := run(t, "claim", "--new", "--server", url, "--home", homeA, "--name", "甲案", "--handle", "dana-bot", "--owner", "Dana")
+	out1, e1, rc := run(t, "claim", "--new", "--server", url, "--home", homeA, "--name", "甲案", "--handle", "sample-bot", "--owner", "Rick")
 	if rc != exitOK {
 		t.Fatalf("claim 1: %d %s", rc, e1)
 	}
-	out2, e2, rc := run(t, "claim", "--new", "--server", url, "--home", homeA, "--name", "乙案", "--owner", "Dana")
+	out2, e2, rc := run(t, "claim", "--new", "--server", url, "--home", homeA, "--name", "乙案", "--owner", "Rick")
 	if rc != exitOK {
 		t.Fatalf("claim 2: %d %s", rc, e2)
 	}

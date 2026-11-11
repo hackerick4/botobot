@@ -158,9 +158,9 @@ func cmdInviteCode(a *app, args []string) *cliError {
 		if rotate {
 			// v0.5.5: name the bridge, as in the claim notice.
 			if n := claimNoticeName(bs.bc.Name); n != "" {
-				sess.pr.raw("NOTIFY_OWNER: 「" + n + "」已產生新邀請，舊邀請已失效。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。")
+				sess.pr.raw("NOTIFY_OWNER: 「" + n + "」已產生新邀請，舊邀請已失效。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。")
 			} else {
-				sess.pr.raw("NOTIFY_OWNER: 已產生新邀請，舊邀請已失效。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。")
+				sess.pr.raw("NOTIFY_OWNER: 已產生新邀請，舊邀請已失效。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。")
 			}
 		}
 		sess.pr.raw(inviteBlock(msg))

@@ -2,14 +2,15 @@ This website embeds subsets of the following typefaces, each licensed under the
 SIL Open Font License, Version 1.1. Only the glyphs needed by the pages are
 included (subset with fonttools). Full families are available from their sources.
 
-- Fraunces — Copyright (c) 2019 The Fraunces Project Authors
+- Fraunces — Copyright 2018 The Fraunces Project Authors
   (https://github.com/undercasetype/Fraunces)
-- Newsreader — Copyright (c) 2019 The Newsreader Project Authors
-  (https://github.com/productiontype/Newsreader)
-- Instrument Sans — Copyright (c) 2022 The Instrument Sans Project Authors
+- Instrument Sans — Copyright 2022 The Instrument Sans Project Authors
   (https://github.com/Instrument/instrument-sans)
-- Noto Serif CJK TC — Copyright (c) 2014-2021 Adobe (https://github.com/adobe-fonts),
-  with Reserved Font Name "Source Han Serif" / distributed by Google as Noto.
+- Noto Serif TC — (c) 2017-2024 Adobe (http://www.adobe.com/).
+  Noto is a trademark of Google Inc. (https://github.com/notofonts/noto-cjk)
+- Noto Sans TC — Copyright 2014-2021 Adobe (http://www.adobe.com/), with
+  Reserved Font Name 'Source'. Source is a trademark of Adobe in the United
+  States and/or other countries. (https://github.com/notofonts/noto-cjk)
 
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007

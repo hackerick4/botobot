@@ -1,5 +1,5 @@
 -- migrations/0003_join_claim.sql
--- Public, unauthenticated /join flow (product request): one curl call
+-- Public, unauthenticated /join flow (owner Rick's request): one curl call
 -- creates a PENDING bridge (no lands yet) plus a one-time admin claim token, and
 -- returns copy-paste prompts so onboarding needs no manual key copying.
 --

@@ -7,5 +7,5 @@
     "esbuild": "0.28.2",
     "gsap": "3.15.0"
   },
-  "comment": "These versions are already vendored under ./web/node_modules. See web/README.md to rebuild."
+  "comment": "Run `cd web && npm install` to fetch these pinned versions into web/node_modules, then see web/README.md to rebuild."
 }

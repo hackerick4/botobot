@@ -73,7 +73,7 @@ func TestRemoveOneOfTwoBridges(t *testing.T) {
 	}
 	for _, l := range ls {
 		peers, _ := l["peers"].([]any)
-		if l["name"] != "研究小組" || l["status"] != "open" || len(peers) != 1 || peers[0] != "dana-bot（Dana）" ||
+		if l["name"] != "研究小組" || l["status"] != "open" || len(peers) != 1 || peers[0] != "sample-bot（Rick）" ||
 			l["joined_at"] == "" || !strings.Contains(l["summary"].(string), "研究小組") {
 			t.Fatalf("bridge line = %v", l)
 		}

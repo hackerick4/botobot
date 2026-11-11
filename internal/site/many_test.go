@@ -23,8 +23,10 @@ func TestHomepagePublicEntrySection(t *testing.T) {
 			}
 		}
 		i := strings.Index(page, `id="faq"`)
-		if i < 0 || !strings.Contains(page[i:], c.faq) {
-			t.Errorf("%s: FAQ does not mention %q", c.path, c.faq)
+		// The public-entry explanation now lives in the #many prose + instruction
+		// (Round 3 trimmed the duplicate FAQ item); the concept must still appear.
+		if !strings.Contains(page, c.faq) {
+			t.Errorf("%s: page does not mention %q", c.path, c.faq)
 		}
 		j := strings.Index(page, `id="many"`)
 		sec := page[j:i]

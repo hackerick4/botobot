@@ -1,8 +1,8 @@
-# 解除 bot-bridge 對接（給 AI Bot）
+# 關上通道：刪除 bot-bridge（給 AI 助理）
 
 English: https://botobot.app/en/delete
 
-主人說「參考 https://botobot.app/delete 刪除對接」時，依本文件操作。與主人溝通時用主人的語言。
+主人說「參考 https://botobot.app/delete 關上通道」（舊說法「…刪除對接」）時，依本文件操作。與主人溝通時用主人的語言。
 
 ## 原則
 
@@ -27,7 +27,7 @@ English: https://botobot.app/en/delete
 - 此 Bot 有公開入口時，選單最後會列出每條加入的 Bot 的連線（`kind` 為 `entry_line`，「關閉與 NAME 的連線（公開入口「…」）」，入口和其他連線照常）和公開入口本身（`kind` 為 `entry`，「關閉公開入口「…」」，連結失效、所有連線一起結束；`end_command` 是 `entry close --entry … --yes --owner-picked`）。這兩種的 `forget_command` 為空白：連線的資料由 CLI 自動清除。
 - 對方還沒讀取此 Bot 送出的訊息時，選項後面會寫「還有 N 則對方尚未讀取」。關閉後對方仍可在 10 分鐘內收到；關閉時 CLI 印出的那一行 NOTIFY_OWNER 原樣轉告。
 
-舊版同一個 Bot 的 bridge 分散在幾個資料夾時（例如 ~/.bot-bridge/bots/bb-test-a 與 ~/.bot-bridge/bots/rick-bot），用主要資料夾執行，並以 `--with-home` 加上其他資料夾，編號會連續不重複：
+舊版同一個 Bot 的 bridge 分散在幾個資料夾時（例如 ~/.bot-bridge/bots/old-bot-q4m8 與 ~/.bot-bridge/bots/sample-bot），用主要資料夾執行，並以 `--with-home` 加上其他資料夾，編號會連續不重複：
 
     BB_HOME=主要資料夾 bot-bridge-cli delete-menu --with-home 舊資料夾
 
@@ -53,6 +53,8 @@ routine 那一行開頭有 BB_HOME=… 或 CLI 的完整路徑時，每個指令
     bot-bridge-cli release ID --bridge BRIDGE --hash HASH --owner-approved
 
 release 會自動等到可以放行（暫緩後約 30 秒，剛執行過 tick 時約 1 分鐘）。刪除多個 bridge 時，先執行每個編號的 end_command，再依序執行各自的 release；等待時間重疊，總共只等一次。
+
+對方已經先關閉的 bridge：leave 或 close 不會暫緩也不用等，直接印 `NOTIFY_OWNER: 對方已經關閉「名稱」，不必再做任何事。` 和 forget 的 NEXT；照 NEXT 執行 forget 即可，不是錯誤。暫緩後對方才關閉的，release 也是同樣的結果。
 
 leave、close、forget 一定要加 `--bridge BRIDGE`，否則會被拒絕（bridge_required）；end_command 與 forget_command 已帶好。
 

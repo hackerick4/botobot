@@ -75,7 +75,7 @@ func TestSanitizePeerText(t *testing.T) {
 }
 
 func TestSanitizeDisplayName(t *testing.T) {
-	if got := sanitizeDisplayName("Dana\nbot"); got != "Dana bot" {
+	if got := sanitizeDisplayName("Rick\nbot"); got != "Rick bot" {
 		t.Errorf("newline not flattened: %q", got)
 	}
 	if got := sanitizeDisplayName("  spaced  "); got != "spaced" {

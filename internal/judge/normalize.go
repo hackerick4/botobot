@@ -75,7 +75,9 @@ func fold(s string) (string, int) {
 		case r >= 0xFF01 && r <= 0xFF5E: // full-width ASCII
 			fullwidthRun++
 			r -= 0xFEE0
-		case r == 0x3000:
+		case r == 0x3000, r == 0x00A0, r >= 0x2000 && r <= 0x200A, r == 0x202F, r == 0x205F:
+			// v0.6.7 (RT-163): odd-width spaces fold to a plain space so
+			// hidden spacing cannot split a phrase past the rules.
 			r = ' '
 		default:
 			if fullwidthRun >= 4 {

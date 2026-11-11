@@ -173,7 +173,7 @@ func setupPair(t *testing.T) pair {
 	url := startTestServer(t)
 	homeA, homeB := t.TempDir(), t.TempDir()
 	out, errOut, code := run(t, "create", "--home", homeA, "--server", url,
-		"--name", "Test Bridge", "--handle", "admin-bot", "--owner", "Dana")
+		"--name", "Test Bridge", "--handle", "admin-bot", "--owner", "Rick")
 	if code != exitOK {
 		t.Fatalf("create exit %d, stderr=%s", code, errOut)
 	}
@@ -229,7 +229,7 @@ func TestE2E(t *testing.T) {
 
 	// --- create (admin) ---
 	out, errOut, code := run(t, "create", "--home", homeA, "--server", url,
-		"--name", "Test Bridge", "--handle", "admin-bot", "--owner", "Dana")
+		"--name", "Test Bridge", "--handle", "admin-bot", "--owner", "Rick")
 	if code != exitOK {
 		t.Fatalf("create exit %d, stderr=%s", code, errOut)
 	}

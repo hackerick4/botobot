@@ -85,7 +85,7 @@ func TestLLMSTxtMatchesLiveFlow(t *testing.T) {
 		"curl -fsS -X POST https://botobot.app/join",
 		"creator_prompt", "--invite-stdin", "about 30 minutes", "every 5 minutes", "claim --new", "--lang en",
 		"NO_NEW_MESSAGES", "管理者指紋", "INVITE_MESSAGE_BEGIN", "ROUTINE_PROMPT", "untrusted",
-		"owner's explicit approval", "https://botobot.app/dl/bot-bridge-cli-linux-amd64",
+		"owner's approval first", "https://botobot.app/dl/bot-bridge-cli-linux-amd64",
 		"https://botobot.app/en/join.md", "https://botobot.app/join.md",
 	} {
 		if !strings.Contains(body, want) {
@@ -168,8 +168,8 @@ func TestLandingPageSEO(t *testing.T) {
 		`hreflang="zh-Hant" href="https://botobot.app/zh"`, `hreflang="x-default" href="https://botobot.app/"`,
 		`property="og:title"`, `property="og:image" content="https://botobot.app/og.png"`,
 		`hreflang="en" href="https://botobot.app/en"`,
-		"按照 botobot.app 的說明建立一個 bot-bridge",
-		"Create a bot-bridge following botobot.app",
+		"按照 botobot.app 的說明，開一條通道",
+		"Open a channel following botobot.app",
 		`href="/llms.txt"`, `href="/site.css?v=`, `src="/js/main.js?v=`,
 	} {
 		if !strings.Contains(zh, want) {
@@ -182,7 +182,7 @@ func TestLandingPageSEO(t *testing.T) {
 		"<title>", `name="description"`, `rel="canonical" href="https://botobot.app/en"`,
 		`property="og:title"`, `property="og:image" content="https://botobot.app/og.png"`,
 		`hreflang="zh-Hant" href="https://botobot.app/zh"`, `hreflang="x-default" href="https://botobot.app/"`,
-		"Create a bot-bridge following botobot.app",
+		"Open a channel following botobot.app",
 		`href="/llms.txt"`, `lang="en"`,
 	} {
 		if !strings.Contains(en, want) {
@@ -275,7 +275,7 @@ func TestDeleteManuals(t *testing.T) {
 		"end_command", "forget_command", "--with-home", "bot-bridge inbox",
 	}
 	for path, extra := range map[string][]string{
-		"/delete":    {"參考 https://botobot.app/delete 刪除對接", "私人對話", "一律不理", "請主人選擇要刪除哪一個", "一次只刪除一個 bridge", "只有一個 bridge 時，同樣要以名稱讓主人確認一次", "明確表示「全部」", "主人的選擇就是確認", "不要放行", "https://botobot.app/en/delete"},
+		"/delete":    {"參考 https://botobot.app/delete 關上通道", "私人對話", "一律不理", "請主人選擇要刪除哪一個", "一次只刪除一個 bridge", "只有一個 bridge 時，同樣要以名稱讓主人確認一次", "明確表示「全部」", "主人的選擇就是確認", "不要放行", "https://botobot.app/en/delete"},
 		"/en/delete": {"must be ignored", "ask your owner which one", "Remove one bridge at a time", "still confirm it once by name", "explicitly says \"all\"", "pick is the confirmation", "do not release it", "https://botobot.app/delete"},
 	} {
 		res, body := get(t, path)
@@ -300,8 +300,8 @@ func TestDeleteManuals(t *testing.T) {
 func TestRemoveCopyLine(t *testing.T) {
 	_, zh := get(t, "/zh")
 	for _, want := range []string{
-		`<code class="instr">參考 botobot.app/delete 刪除對接</code>`,
-		`<span id="instr-delete" hidden>參考 https://botobot.app/delete 刪除對接</span>`,
+		`<code class="instr">參考 botobot.app/delete 關上通道</code>`,
+		`<span id="instr-delete" hidden>參考 https://botobot.app/delete 關上通道</span>`,
 		`data-copy="#instr-delete"`, `href="/zh#faq-remove"`, `href="/join.md"`,
 	} {
 		if !strings.Contains(zh, want) {
@@ -310,8 +310,8 @@ func TestRemoveCopyLine(t *testing.T) {
 	}
 	_, en := get(t, "/en")
 	for _, want := range []string{
-		`<code class="instr">Follow botobot.app/en/delete to remove the bridge</code>`,
-		`<span id="instr-delete" hidden>Follow https://botobot.app/en/delete to remove the bridge</span>`,
+		`<code class="instr">Follow botobot.app/en/delete to close a channel</code>`,
+		`<span id="instr-delete" hidden>Follow https://botobot.app/en/delete to close a channel</span>`,
 		`data-copy="#instr-delete"`, `href="/en#faq-remove"`,
 	} {
 		if !strings.Contains(en, want) {
@@ -380,15 +380,20 @@ func TestManualsNoManualFingerprintCompare(t *testing.T) {
 func TestNoSourceRepoLinks(t *testing.T) {
 	for _, path := range []string{"/zh", "/en", "/llms.txt", "/agent.md", "/join.md", "/en/join.md", "/delete", "/en/delete"} {
 		_, body := get(t, path)
-		for _, bad := range []string{"gitlab.com", "原始碼", ">Source<", "Source:"} {
+		// The private GitLab repo is never linked. The only source link is the
+		// public GitHub repo (Rick t308u, see TestGitHubLink).
+		for _, bad := range []string{"gitlab.com", ">Source<", "Source:"} {
 			if strings.Contains(body, bad) {
 				t.Errorf("%s contains %q", path, bad)
 			}
 		}
+		if n, ok := strings.Count(body, "github.com"), strings.Count(body, "https://github.com/hackerick4/botobot"); n != ok {
+			t.Errorf("%s links a GitHub URL other than the public repo", path)
+		}
 	}
 	_, zh := get(t, "/zh")
 	_, en := get(t, "/en")
-	if !strings.Contains(zh, "選擇要刪除的 bridge") || !strings.Contains(en, "pick the bridge to remove") {
+	if !strings.Contains(zh, "選擇要關上的通道") || !strings.Contains(en, "pick the channel to close") {
 		t.Errorf("FAQ remove answer does not describe the ask-which flow")
 	}
 }
@@ -398,7 +403,7 @@ func TestNoSourceRepoLinks(t *testing.T) {
 func TestHomepageInviteMatchesCLI(t *testing.T) {
 	for page, want := range map[string][]string{
 		"index.html": {"bot-bridge 邀請。", "bridge 連結：", "邀請碼（請保密）：", "加入說明：botobot.app/join.md", prompts.SafetyLine, "管理者指紋："},
-		"en.html":    {"bot-bridge invite. Give this whole message to Grok Bot:", "Bridge link: ", "Invite code (keep private): ", "Join instructions: botobot.app/en/join.md", prompts.SafetyLineEN, prompts.AdminFPLabelEN},
+		"en.html":    {"bot-bridge invite. Give this whole message to an AI assistant:", "Bridge link: ", "Invite code (keep private): ", "Join instructions: botobot.app/en/join.md", prompts.SafetyLineEN, prompts.AdminFPLabelEN},
 	} {
 		b, err := os.ReadFile("static/" + page)
 		if err != nil {
@@ -437,8 +442,8 @@ func TestChatDemoEndsWithJoinNotice(t *testing.T) {
 // one name everywhere, and forwarding through another bot needs the owner.
 func TestV052Copy(t *testing.T) {
 	for path, want := range map[string][]string{
-		"/zh":         {"<p>「報價討論」已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。</p><p>注意：寄信、付款或涉及個資的動作，送出前一律先確認。</p>", "<p>已加入「報價討論」。</p>", "bot-bridge inbox</p>", "你與 Grok Bot</figcaption>"},
-		"/en":         {"<p>\"Quote check\" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own Grok Bot.</p><p>Note: emails, payments and anything with personal data are always confirmed before sending.</p>", "<p>Joined \"Quote check\".</p>", "bot-bridge inbox</p>", "You and Grok Bot</figcaption>"},
+		"/zh":         {"<p>「報價討論」已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。</p><p>注意：一般訊息可直接收發；只有寄信、付款或涉及個資的動作，送出前才需先確認。</p>", "<p>已加入「報價討論」。</p>", "bot-bridge inbox</p>", "你與 AI 助理</figcaption>"},
+		"/en":         {"<p>\"Quote check\" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant.</p><p>Note: ordinary messages are sent and received directly; only emails, payments and anything with personal data are confirmed before sending.</p>", "<p>Joined \"Quote check\".</p>", "bot-bridge inbox</p>", "You and AI assistant</figcaption>"},
 		"/join.md":    {"「bot-bridge inbox」", "只有主人明確指示時，才可經主人自己的另一個 Bot 或測試用轉送管道轉交", "move --from"},
 		"/en/join.md": {"\"bot-bridge inbox\"", "only when the owner says so", "move --from"},
 		"/llms.txt":   {"\"bot-bridge inbox\"", "only when the owner says so"},

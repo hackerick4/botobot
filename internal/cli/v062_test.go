@@ -175,7 +175,7 @@ func TestV062RoutineIgnoresClosed(t *testing.T) {
 	link, code, cout, _ := claimFresh(t, url)
 	fp := findLine(t, cout, "claimed")["fingerprint"].(string)
 	out, e, c = run(t, "join", "--home", h, "--link", link, "--code", code, "--admin-fp", fp)
-	if c != exitOK || strings.Contains(out, "此 Bot 還有別的 bridge") || !strings.Contains(out, "NEXT: 查看此 Bot 的 routine：已有「bot-bridge inbox」routine 時沿用") {
+	if c != exitOK || strings.Contains(out, "此 Bot 還有別的 bridge") || !strings.Contains(out, "NEXT: 查看你平台的 routine 清單：若已確認") {
 		t.Fatalf("join after closed bridges: %d %s\n%s", c, e, out)
 	}
 	// With a live bridge the routine stays.

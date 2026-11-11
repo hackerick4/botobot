@@ -49,6 +49,8 @@ var Pages = []Page{
 	{"/robots.txt", "robots.txt", "text/plain; charset=utf-8"},
 	{"/sitemap.xml", "sitemap.xml", "application/xml; charset=utf-8"},
 	{"/favicon.svg", "favicon.svg", "image/svg+xml"},
+	{"/favicon.ico", "favicon.ico", "image/x-icon"},
+	{"/apple-touch-icon.png", "apple-touch-icon.png", "image/png"},
 	{"/og.png", "og.png", "image/png"},
 }
 

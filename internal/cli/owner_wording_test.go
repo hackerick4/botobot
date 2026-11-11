@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// Owner notices use neutral product wording: no 你/您/我 (Dana, copy pass v7).
+// Owner notices use neutral product wording: no 你/您/我 (Rick, copy pass v7).
 // Every CLI run in the tests goes through runEnv, which calls this on stdout,
 // so each NOTIFY_OWNER line the tests reach is checked. Peer-supplied text
 // (message previews, handles) is not part of the template, so the tests keep

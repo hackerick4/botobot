@@ -6,12 +6,11 @@
 #
 #   LIBS=/path/to/node_modules scripts/build-site.sh
 #
-# Defaults to the vendored libraries at ./web/node_modules
-# (gsap@3.15.0, esbuild@0.28.2). See web/README.md.
+# Defaults to web/node_modules (gsap@3.15.0, esbuild@0.28.2). See web/README.md.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LIBS="${LIBS:-./web/node_modules}"
+LIBS="${LIBS:-$ROOT/web/node_modules}"
 OUT="$ROOT/internal/site/static/js"
 
 if [ ! -d "$LIBS" ]; then

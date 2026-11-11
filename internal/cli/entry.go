@@ -440,6 +440,7 @@ func entryManage(a *app, sub string, args []string) *cliError {
 			sess.pr.raw(pick(en,
 				"NEXT: this bot has no bridge left: delete its \"bot-bridge inbox\" routine (do not pause it); no need to ask the owner.",
 				"NEXT: 此 Bot 已無 bridge，刪掉「bot-bridge inbox」routine（不是暫停），不必再問主人。"))
+			sess.pr.raw(dedicatedEndLine(en))
 			sess.pr.raw(keepNameLine(ec.Handle, en))
 		} else if sess.ks.liveCount() == 0 {
 			// v0.6.2: only closed, not yet forgotten bridges are left.

@@ -27,13 +27,13 @@ func visibleText(page string) string {
 }
 
 // Visitor-facing copy uses neutral product wording without pronouns that
-// address the reader or speak as the product (Dana, copy pass v7). The H1 and
+// address the reader or speak as the product (Rick, copy pass v7). The H1 and
 // the CTA one-liner are fixed and contain none.
 func TestHomepageNeutralWording(t *testing.T) {
 	_, zh := get(t, "/zh")
 	for _, l := range strings.Split(visibleText(zh), "\n") {
-		// v0.5.2 (Dana t156u): the demo caption addresses the visitor.
-		if strings.TrimSpace(l) == "你與 Grok Bot" {
+		// v0.5.2 (Rick t156u): the demo caption addresses the visitor.
+		if strings.TrimSpace(l) == "你與 AI 助理" {
 			continue
 		}
 		if strings.ContainsAny(l, "你您我") || strings.Contains(l, "他的") {

@@ -24,6 +24,7 @@ const (
 	SLeak     Category = "S-LEAK"     // prompt/rules/memory leak markers
 	SExfilURL Category = "S-EXFILURL" // URLs carrying data in their query
 	SContact  Category = "S-CONTACT"  // e-mail addresses
+	SPay      Category = "S-PAY"      // v0.6.8: saying a payment or order was or will be made
 )
 
 type orule struct {
@@ -73,13 +74,18 @@ var outboundRules = []orule{
 	or("PII-PHONE-CN", SPII, LevelMedium, `(?:\+?86[ -]?)?\b1[3-9]\d[ -]?\d{4}[ -]?\d{4}\b`, nil),
 	or("PII-PHONE-INTL", SPII, LevelMedium, `\+\d{1,3}[ .-]?\(?\d{1,4}\)?[ .-]?\d{3,4}[ .-]?\d{3,4}\b`, nil),
 	or("PII-PHONE-US", SPII, LevelMedium, `\(\d{3}\)\s?\d{3}-\d{4}\b|\b\d{3}-\d{3}-\d{4}\b`, nil),
-	or("PII-ADDR-ZH", SPII, LevelMedium, `(?:[市縣區鄉鎮]).{0,12}?(?:路|街|大道)(?:[一二三四五六七八九十]段)?.{0,8}?\d+(?:之\d+)?號`, nil),
+	or("PII-ADDR-ZH", SPII, LevelMedium, `(?:[市縣區鄉鎮]).{0,12}?(?:路|街|大道)(?:[一二三四五六七八九十]段)?.{0,8}?\d+(?:之\d+)?\s*號`, nil),
 	or("PII-ADDR-CN", SPII, LevelMedium, `(?:省|市|區|县|縣).{0,12}?(?:路|街|道|弄|巷)\d+號`, nil),
 	or("PII-ADDR-EN", SPII, LevelMedium, `(?i)\b\d{1,6}\s+(?:[A-Za-z]+\s){1,4}(?:street|st|avenue|ave|road|rd|boulevard|blvd|lane|ln|drive|dr|court|ct|way|place|pl|terrace)\b\.?(?:,?\s*(?:apt|suite|unit|#)\s*\w+)?`, nil),
 	or("PII-BIRTH", SPII, LevelMedium, `(?i)(?:生日|出生(?:日期|年月日)?|date of birth|\bdob\b|born on|birthday)\s*(?:是|為|:|：|is)?\s*(?:\d{2,4}[-/.年]\d{1,2}[-/.月]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{1,2},? \d{4})`, nil),
 	or("PII-BANK", SPII, LevelMedium, `(?i)(?:帳號|帳戶|戶頭|銀行|account(?: no\.?| number)?|routing(?: number)?|acct)\D{0,12}\d{3,4}[ -]?\d{3,}[ -]?\d{3,}`, nil),
 	or("PII-NATID-ZH", SPII, LevelMedium, `(?:身分證|身份證|統一證號|居留證)(?:字號|號碼)?\s*(?:是|為|:|：)?\s*[A-Z][A-D0-9]\d{8}`, nil),
 	or("PII-CNID", SPII, LevelMedium, `\b\d{6}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b`, nil),
+	// v0.6.8: ordinary replies now go out without a card, so a reply that
+	// says a payment or order was (or will be) made is held for the owner,
+	// even when the bot thought it was "the natural next step".
+	or("PAY-COMMIT-ZH", SPay, LevelMedium, `(?:已經?|剛剛?|馬上|這就|立刻|我們?會|我們?來|幫(?:你|您|妳)|替(?:你|您|妳))(?:幫(?:你|您|妳)|替(?:你|您|妳))?(?:先)?(?:付款|付清|付了|轉帳|轉了|匯款|匯了|刷卡|下單|下訂|訂購|付訂金|付了訂金|支付)`, nil),
+	or("PAY-COMMIT-EN", SPay, LevelMedium, `(?i)\b(?:i|we)(?:'ve| have)?(?: just| already)?\s+(?:paid|transferred|wired|sent (?:the |a |your )?payment|placed (?:the |an |your )?order)\b|\b(?:i|we)(?:'ll| will)\s+(?:pay|transfer|wire)\s+(?:the |you |your |it|\$|nt\$|usd|\d)`, nil),
 	or("ENT-B64", SEntropy, LevelMedium, `[A-Za-z0-9+/]{120,}={0,2}|[A-Za-z0-9_-]{160,}`, nil),
 	or("ENT-HEX", SEntropy, LevelMedium, `\b[0-9a-fA-F]{128,}\b`, nil),
 	or("ENT-DATAURL", SEntropy, LevelMedium, `(?i)data:[a-z]+/[a-z0-9.+-]+;base64,[A-Za-z0-9+/]{40,}`, nil),
@@ -326,6 +332,7 @@ var outCatZH = map[Category]string{
 	SLeak:     "像是在貼出助理的規則或系統設定",
 	SExfilURL: "含可疑網址",
 	SContact:  "含多個 email",
+	SPay:      "提到付款、轉帳或下單",
 }
 
 // DescribeOutZH renders outbound hits as a short plain zh-TW phrase list.

@@ -11,8 +11,8 @@ import (
 // the manuals publish the release key and the SHA-256 list for bots.
 func TestV063OfficialDownloadCopy(t *testing.T) {
 	for path, want := range map[string][]string{
-		"/zh": {"怎麼確認是官方版本？", "只從 botobot.app 下載，其他網址都不是官方版本。Grok Bot 安裝時會自動核對，不符就停止安裝。", `<p class="foot-tag">只從 botobot.app 下載，其他網址都不是官方版本。</p>`},
-		"/en": {"How to tell the official version", "Download only from botobot.app. Other addresses are not official. Grok Bot checks the download when installing and stops if it does not match.", `<p class="foot-tag">Download only from botobot.app. Other addresses are not official.</p>`},
+		"/zh": {"怎麼確認是官方版本？", "只從 botobot.app 下載，其他網址都不是官方版本。助理安裝時會自動核對，不符就停止安裝。", `<p class="foot-tag">只從 botobot.app 下載，其他網址都不是官方版本。</p>`},
+		"/en": {"How to tell the official version", "Download only from botobot.app. Other addresses are not official. The assistant checks the download when installing and stops if it does not match.", `<p class="foot-tag">Download only from botobot.app. Other addresses are not official.</p>`},
 	} {
 		_, body := get(t, path)
 		for _, w := range want {

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const goodInviteEN = "bot-bridge invite. Give this whole message to Grok Bot:\n" +
+const goodInviteEN = "bot-bridge invite. Give this whole message to an AI assistant:\n" +
 	"Bridge link: https://botobot.app/b/br_TESTONLY123\n" +
 	"Invite code (keep private): 123456\n" +
 	"Join instructions: https://botobot.app/en/join.md\n" +

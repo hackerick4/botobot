@@ -8,6 +8,7 @@ package cli
 
 import (
 	"crypto/ed25519"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -179,10 +180,10 @@ func checkAdminFP(lc *landsCache, selfID, expect string) (string, string) {
 // Owner-facing notices (v0.5.2): only what to do and what to watch out for.
 // Security details (admin, fingerprint, polling) stay in bot-facing output.
 const (
-	claimNoticeZH  = "bridge 已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。"
-	claimNoticeEN  = "Bridge created. The next message is the invite: send all of it privately to the other person, to paste as is into their own Grok Bot."
-	ownerCautionZH = "注意：寄信、付款或涉及個資的動作，送出前一律先確認。"
-	ownerCautionEN = "Note: emails, payments and anything with personal data are always confirmed before sending."
+	claimNoticeZH  = "bridge 已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。"
+	claimNoticeEN  = "Bridge created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant."
+	ownerCautionZH = "注意：一般訊息可直接收發；只有寄信、付款或涉及個資的動作，送出前才需先確認。"
+	ownerCautionEN = "Note: ordinary messages are sent and received directly; only emails, payments and anything with personal data are confirmed before sending."
 )
 
 // maxClaimNameRunes caps the bridge name quoted in the claim notice.
@@ -210,11 +211,11 @@ func claimNotice(name, lang string) string {
 	n := claimNoticeName(name)
 	switch {
 	case lang == "en" && n != "":
-		return "\"" + n + "\" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own Grok Bot."
+		return "\"" + n + "\" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant."
 	case lang == "en":
 		return claimNoticeEN
 	case n != "":
-		return "「" + n + "」已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 Grok Bot。"
+		return "「" + n + "」已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。"
 	}
 	return claimNoticeZH
 }
@@ -469,6 +470,52 @@ func (a *app) readInviteText(path string) (string, *cliError) {
 	return text, nil
 }
 
+// inviteFieldPointer is the claim/invite-code JSON "invite" value: a human
+// pointer to the INVITE_MESSAGE block printed in stdout, deliberately NOT a
+// usable invite. The real block (with the one-time code) is never put in JSON;
+// a machine reader must take it from the INVITE_MESSAGE_BEGIN..END lines in
+// stdout, not from this field.
+const inviteFieldPointer = "see the INVITE_MESSAGE block printed in stdout, not this JSON field"
+
+// looksLikeInvitePlaceholder reports whether text is the claim JSON "invite"
+// field value (the pointer above, or the pre-fix placeholder that earlier CLIs
+// put there) rather than a real invite block. It is used only to give a clearer
+// error; a real invite always parses normally.
+func looksLikeInvitePlaceholder(text string) bool {
+	t := strings.TrimSpace(text)
+	if t == inviteFieldPointer {
+		return true
+	}
+	// Pre-fix placeholder (v0.6.12 and earlier): the BEGIN/END tokens joined by
+	// an ellipsis, with no real bridge link or code. Bounded length so a real
+	// invite that happens to mention the tokens is never matched.
+	return len(t) < 200 && strings.Contains(t, "INVITE_MESSAGE_BEGIN") &&
+		strings.Contains(t, "INVITE_MESSAGE_END") && strings.Contains(t, "…") &&
+		!strings.Contains(t, "/b/br_")
+}
+
+// progress prints an immediate (unbuffered) PROGRESS marker and one owner-facing
+// human line before a slow step (claim/join network), so the owner sees motion
+// even if the step is slow. It is never a success signal and never a
+// security/encryption claim; host-LLM silence is not labelled here. The human
+// line is in the invite language (en when en is true, else zh).
+//
+// It writes to STDERR, not stdout: these lines precede the command's JSON result
+// line, so emitting them on stdout would make the FIRST stdout line non-JSON and
+// break consumers that do `head -1 | jq`. Keeping them on stderr means stdout's
+// first line stays the JSON result. Post-result PROGRESS/CTA lines (invite_ready,
+// joined, wait_peer) stay on stdout, where they come AFTER the JSON and are no
+// different from the long-standing NOTIFY_OWNER / NEXT / invite-block lines a
+// consumer must already scan past.
+func progress(a *app, machine string, en bool, zh, enText string) {
+	fmt.Fprintln(a.stderr, "PROGRESS: "+machine)
+	if en {
+		fmt.Fprintln(a.stderr, enText)
+	} else {
+		fmt.Fprintln(a.stderr, zh)
+	}
+}
+
 func parseInvite(text string) (link, code, adminFP string, err error) {
 	links := map[string]bool{}
 	codes := map[string]bool{}
@@ -539,6 +586,24 @@ func (s *session) printRoutine(routine string, prior int, lang string, hadEntry 
 		}
 	}
 	en := prompts.IsEnglish(lang)
+	// Always print the concrete, ready-to-paste parameters so the assistant maps
+	// them straight to its platform's create-routine tool in a single turn rather
+	// than re-deriving the name, cadence and prompt from the prose below (warm08/09:
+	// the claim/join -> routine turn was ~8-10 s). warm09 showed the earlier
+	// "fresh only" gate almost never fired: test bots and returning users have
+	// prior bridges whose limited routines are usually expired, so the line was
+	// absent exactly when it was needed. reuse_if_confirmed marks the paths where
+	// the bot may already have a usable routine: the assistant still follows the
+	// NEXT prose (confirm an enabled, unexpired inbox first) and creates only if
+	// none is confirmed, so no duplicate routine is induced.
+	reuseIfConfirmed := hadEntry || prior > 0
+	s.pr.raw(routineCreateLine(routine, reuseIfConfirmed))
+	// The CLI cannot see platform routines (v0.5.3). A reuse hint must therefore
+	// be CONDITIONAL on the bot confirming an enabled, unexpired, bridge-agnostic
+	// "bot-bridge inbox" routine for this same BB_HOME in its own routine list;
+	// it must never claim a routine exists from tick state (a manual tick or a
+	// just-deleted limited routine would be a false positive and silently drop
+	// the receive path).
 	switch {
 	// v0.6.1: a bot with a public entry already runs the routine, even when
 	// no visitor line is open yet.
@@ -546,25 +611,64 @@ func (s *session) printRoutine(routine string, prior int, lang string, hadEntry 
 		s.pr.raw("NEXT: this bot already has a public entry, so it already has its \"bot-bridge inbox\" routine: keep using it (the same routine also checks this one); do not create another. Only if that routine is missing, create it every 5 minutes with only the text after ROUTINE_PROMPT: above.")
 	case hadEntry:
 		s.pr.raw("NEXT: 此 Bot 已有公開入口，所以已有「bot-bridge inbox」routine：沿用它（同一個 routine 會一併檢查這裡），不要另建。只有找不到這個 routine 時，才建立每 5 分鐘一次的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。")
-	// v0.6.2: earlier bridges that are all closed (not yet forgotten) are
-	// not "other bridges": the bot may have deleted its routine already.
+	// v0.6.2: earlier bridges that are all closed (not yet forgotten) are not
+	// "other bridges" (the bot may have deleted its routine already), so the
+	// hint does not claim it has other bridges; the confirmation is still
+	// explicit, and it must not assume a routine survived.
 	case prior > 0 && s.ks.liveCount() <= 1 && en:
-		s.pr.raw("NEXT: check this bot's routines: if it has a \"bot-bridge inbox\" routine, keep using it (it also checks this bridge); do not create another. If it has none, create it every 5 minutes with only the text after ROUTINE_PROMPT: above.")
+		s.pr.raw("NEXT: check your platform's routine list: if you have CONFIRMED an enabled, unexpired \"bot-bridge inbox\" routine whose prompt is exactly the bridge-agnostic tick line above (same BB_HOME, no --bridge), keep it and do not create another (one routine checks every bridge of this bot). A routine whose prompt contains --bridge is channel-filtered and is NOT reusable as-is: update that routine's prompt to the bridge-agnostic line above, or create a new one. Otherwise create it every 5 minutes with only the text after ROUTINE_PROMPT: above. Do not assume a routine still exists; a limited or expired routine may be gone.")
 	case prior > 0 && s.ks.liveCount() <= 1:
-		s.pr.raw("NEXT: 查看此 Bot 的 routine：已有「bot-bridge inbox」routine 時沿用（同一個 routine 會一併檢查這個 bridge），不要另建；沒有時，建立每 5 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。")
+		s.pr.raw("NEXT: 查看你平台的 routine 清單：若已確認有一個「bot-bridge inbox」routine 仍啟用、未過期，且提示詞正是上面那一行、對應同一個 BB_HOME 的 bridge 無關 tick（沒有 --bridge），就沿用它、不要另建（一個 routine 會檢查此 Bot 的所有 bridge）。提示詞含 --bridge 的 routine 是channel過濾的，不能直接沿用：先把它的提示詞改成上面這一行（bridge 無關），或改建新的。否則建立每 5 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。不要假設 routine 還在；限時或過期的 routine 可能已消失。")
 	// prior > 0 means this folder already had a bridge; whether a routine
-	// exists is the bot's to check (the CLI cannot see routines, v0.5.3).
+	// exists is the bot's to confirm (the CLI cannot see routines, v0.5.3). The
+	// confirmation is explicit: only an enabled, unexpired, bridge-agnostic
+	// inbox routine for this same BB_HOME may be reused; a --bridge (channel-
+	// filtered) routine must be updated to the plain line first or replaced.
 	case prior > 0 && en:
-		s.pr.raw("NEXT: this bot has other bridges. Check its routines: if it has a \"bot-bridge inbox\" routine, that one routine also checks this bridge; do not create another. If it has none, create it every 5 minutes with only the text after ROUTINE_PROMPT: above. If old routines have --bridge in the prompt, keep one, change it to the line above, and delete the rest.")
+		s.pr.raw("NEXT: this bot has other bridges. Check your platform's routine list: if you have CONFIRMED an enabled, unexpired \"bot-bridge inbox\" routine whose prompt is exactly the bridge-agnostic tick line above (same BB_HOME, no --bridge), keep it and do not create another (one routine checks every bridge of this bot). A routine whose prompt contains --bridge is channel-filtered and is NOT reusable as-is: update that routine's prompt to the bridge-agnostic line above, or create a new one. Otherwise create it every 5 minutes with only the text after ROUTINE_PROMPT: above. Do not assume a routine still exists just because this bot had one before; a limited or expired routine may be gone.")
 	case prior > 0:
-		s.pr.raw("NEXT: 此 Bot 還有別的 bridge。查看它的 routine：已有「bot-bridge inbox」routine 時，同一個 routine 會一併檢查這個 bridge，不要另建；沒有時，建立每 5 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。舊 routine 的提示詞含 --bridge 時，留一個並改成上面這一行，其餘刪除。")
+		s.pr.raw("NEXT: 此 Bot 還有別的 bridge。查看你平台的 routine 清單：若已確認有一個「bot-bridge inbox」routine 仍啟用、未過期，且提示詞正是上面那一行、對應同一個 BB_HOME 的 bridge 無關 tick（沒有 --bridge），就沿用它、不要另建（一個 routine 會檢查此 Bot 的所有 bridge）。提示詞含 --bridge 的 routine 是channel過濾的，不能直接沿用：先把它的提示詞改成上面這一行（bridge 無關），或改建新的。否則建立每 5 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。不要因為此 Bot 以前有過 routine 就假設它還在；限時或過期的 routine 可能已消失。")
 	case en && home != "":
-		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 5 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. To create or join another bridge later, put the same " + home + " in front of the command.")
+		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 5 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. This step is required: without it no messages arrive. Use the platform's own scheduler; if it cannot run every 5 minutes or more often, stop and tell the owner instead of using a longer interval. To create or join another bridge later, put the same " + home + " in front of the command.")
 	case en:
-		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 5 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot.")
+		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 5 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. This step is required: without it no messages arrive. Use the platform's own scheduler; if it cannot run every 5 minutes or more often, stop and tell the owner instead of using a longer interval.")
 	case home != "":
-		s.pr.raw("NEXT: 建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。之後再建立或加入 bridge 時，指令前加上同一個 " + home + "。")
+		s.pr.raw("NEXT: 建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立；平台做不到每 5 分鐘（或更頻繁）時，停下並告訴主人，不要改用較長的間隔。之後再建立或加入 bridge 時，指令前加上同一個 " + home + "。")
 	default:
-		s.pr.raw("NEXT: 建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。")
+		s.pr.raw("NEXT: 建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立；平台做不到每 5 分鐘（或更頻繁）時，停下並告訴主人，不要改用較長的間隔。")
 	}
+	s.pr.raw(routineApprovalNext(en))
+}
+
+// routineCreateLine returns the concrete create-routine parameters as one JSON
+// line the assistant can map directly to its platform's scheduler tool: the
+// fixed name, the 5-minute cadence (also as poll_interval_sec), and the exact
+// prompt (the same text as the ROUTINE_PROMPT line, which carries no secret —
+// just the tick command). reuse_if_confirmed is true on the paths where this bot
+// may already have a usable routine (public entry, or prior bridges): the
+// assistant must still follow the NEXT prose — confirm an enabled, unexpired
+// "bot-bridge inbox" routine for this BB_HOME first and create only if none is
+// confirmed — so the params never induce a duplicate. It is additive output; the
+// ROUTINE_PROMPT and NEXT lines are unchanged, so existing parsers keep working.
+func routineCreateLine(routine string, reuseIfConfirmed bool) string {
+	spec := struct {
+		Name             string `json:"name"`
+		EveryMinutes     int    `json:"every_minutes"`
+		PollIntervalSec  int    `json:"poll_interval_sec"`
+		Prompt           string `json:"prompt"`
+		ReuseIfConfirmed bool   `json:"reuse_if_confirmed"`
+	}{"bot-bridge inbox", 5, 300, routine, reuseIfConfirmed}
+	b, _ := json.Marshal(spec)
+	return "ROUTINE_CREATE: " + string(b)
+}
+
+// routineApprovalNext (v0.6.8, round-15 finding: an approval card for the
+// routine expired unseen and the bot silently waited ~90 minutes) tells the
+// bot to say in plain words that one tap is needed, to say so if the card
+// expires and ask once more, and to fetch by hand meanwhile.
+func routineApprovalNext(en bool) string {
+	if en {
+		return "NEXT: if creating the routine shows an approval card, tell the owner in one plain sentence: \"One tap on Approve is needed to start receiving messages.\" If the card expires, say \"The approval card expired; messages are not being received yet\" and ask the owner once more; do not keep retrying on your own. Until the routine exists, run the tick line above by hand to fetch messages."
+	}
+	return "NEXT: 建立 routine 時若跳出核准卡，用一句白話告訴主人：「需要按一下核准，才會開始收對方的訊息。」卡片過期沒按到，就說「核准卡過期了，還沒開始收訊息」，再問主人一次；不要自己一直重試。routine 建好之前，手動執行上面那一行 tick 收訊息。"
 }

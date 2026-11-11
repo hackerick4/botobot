@@ -69,7 +69,7 @@ func seedBridge(t *testing.T, s *Store, quota int64, n int) (string, []string) {
 	t.Helper()
 	ctx := context.Background()
 	b, err := s.CreateBridge(ctx, CreateBridgeParams{
-		Name:            "ACME x Dana",
+		Name:            "ACME x Rick",
 		MaxLands:        32,
 		LandsCanInvite:  true,
 		RateLimitPerMin: 30,

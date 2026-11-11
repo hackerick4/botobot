@@ -115,7 +115,7 @@ WHERE id = ?`, now, closeReason, closeDetail, out.GraceUntil, closerLandID, brid
 			return nil, nil
 		}
 
-		if err := purgeBridgeContent(ctx, tx, bridgeID); err != nil {
+		if err := purgeBridgeContent(ctx, tx, bridgeID, now); err != nil {
 			return nil, err
 		}
 		// Tombstone: keep id/status/closed_at/close_reason, blank the rest.
@@ -145,7 +145,16 @@ WHERE id = ?`, now, closeReason, closeDetail, bridgeID); err != nil {
 // purgeBridgeContent deletes per-bridge content. Deleting lands cascades to
 // public_keys and api_keys (ON DELETE CASCADE); messages / inbox / delivery
 // are removed explicitly because the bridge row is retained as a tombstone.
-func purgeBridgeContent(ctx context.Context, tx *sql.Tx, bridgeID string) error {
+func purgeBridgeContent(ctx context.Context, tx *sql.Tx, bridgeID string, now int64) error {
+	// v0.6.6: remember which keys belonged to this bridge (hash only) so the
+	// tombstone can tell its own former members 410 and everyone else 404.
+	if _, err := tx.ExecContext(ctx, `
+INSERT OR IGNORE INTO closed_keys (key_hash, bridge_id, closed_at)
+SELECT k.key_hash, l.bridge_id, ?
+FROM api_keys k JOIN lands l ON l.id = k.land_id
+WHERE l.bridge_id = ? AND k.revoked_at IS NULL`, now, bridgeID); err != nil {
+		return err
+	}
 	for _, q := range []string{
 		"DELETE FROM lands WHERE bridge_id = ?",
 		"DELETE FROM messages WHERE bridge_id = ?",
@@ -202,7 +211,7 @@ func (s *Store) FinalizeGrace(ctx context.Context, bridgeID string) error {
 		if !gu.Valid {
 			return nil, nil
 		}
-		if err := purgeBridgeContent(ctx, tx, bridgeID); err != nil {
+		if err := purgeBridgeContent(ctx, tx, bridgeID, s.nowMillis()); err != nil {
 			return nil, err
 		}
 		if _, err := tx.ExecContext(ctx,

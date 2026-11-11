@@ -85,6 +85,59 @@ func TestV063VerifySelf(t *testing.T) {
 	}
 }
 
+// verify-self --manifest/--sig reuses the manifest the install command already
+// downloaded (two fewer network round trips) while still checking its signature
+// against the built-in release key. BB_UPDATE_URL points at a dead address to
+// prove no fetch happens on the reuse path.
+func TestVerifySelfManifestReuse(t *testing.T) {
+	f := newUpdFixture(t, "5")
+	f.publish(t, "v9.9.9", 9, f.priv)
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("BB_HOME", "")
+	t.Setenv("BB_UPDATE_URL", "http://127.0.0.1:1/dl/manifest.json") // must NOT be used
+
+	good := filepath.Join(t.TempDir(), "good")
+	if err := os.WriteFile(good, f.bin.Load().([]byte), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	mf := filepath.Join(t.TempDir(), "m.json")
+	sf := filepath.Join(t.TempDir(), "m.sig")
+	if err := os.WriteFile(mf, f.manifest.Load().([]byte), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sf, f.sig.Load().([]byte), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reuse path: ok without any network fetch.
+	out, e, c := run(t, "verify-self", "--file", good, "--manifest", mf, "--sig", sf)
+	if c != exitOK || !strings.Contains(out, `"status":"ok"`) || !strings.Contains(out, `"release":"v9.9.9"`) {
+		t.Fatalf("reuse ok: %d %s %s", c, out, e)
+	}
+
+	// A manifest file not signed by the release key is still rejected.
+	_, other, _ := ed25519.GenerateKey(rand.Reader)
+	f.publish(t, "v9.9.9", 9, other)
+	if err := os.WriteFile(mf, f.manifest.Load().([]byte), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sf, f.sig.Load().([]byte), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, e, c = run(t, "verify-self", "--file", good, "--manifest", mf, "--sig", sf); c == exitOK || !strings.Contains(e, "verify_bad_manifest") {
+		t.Fatalf("reuse other key: %d %s", c, e)
+	}
+
+	// --manifest without --sig (and vice versa) is a usage error.
+	if _, _, c = run(t, "verify-self", "--file", good, "--manifest", mf); c == exitOK {
+		t.Fatal("--manifest without --sig accepted")
+	}
+	if _, _, c = run(t, "verify-self", "--file", good, "--sig", sf); c == exitOK {
+		t.Fatal("--sig without --manifest accepted")
+	}
+}
+
 func hexSHA(b []byte) string {
 	const h = "0123456789abcdef"
 	s := sha256Sum(b)

@@ -49,7 +49,7 @@ func checkPlaceholderNames(cmd, handle, owner string) *cliError {
 // slugName turns a name into handle letters: lowercase latin letters and
 // digits, with spaces, hyphens, underscores and dots as single hyphens. Since
 // v0.5.4 Chinese characters become toneless pinyin (one run of characters is
-// one word: "BB 測試 A" -> "bb-ceshi-a", "王小明" -> "wangxiaoming") and
+// one word: "小助手 X" -> "xiaozhushou-x", "王小明" -> "wangxiaoming") and
 // full-width latin letters count as latin. Other scripts (kana, hangul, …) are
 // dropped; when more letters are dropped than kept, or fewer than two letters
 // or digits remain, the name gives "" so the caller falls back instead of

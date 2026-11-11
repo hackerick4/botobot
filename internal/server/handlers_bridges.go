@@ -442,16 +442,12 @@ func (s *Server) handleJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A closed bridge answers 410 (general rule); an unknown bridge is folded
-	// into join_failed to avoid leaking existence.
+	// An unknown or closed bridge is folded into join_failed so the caller
+	// (who holds no key) cannot tell whether the id ever existed (v0.6.6: a
+	// closed bridge used to answer 410 here).
 	bridge, err := s.store.GetBridge(r.Context(), bridgeID)
-	if err != nil {
+	if err != nil || bridge.Status == "closed" {
 		s.failJoin(w, r, ip, bridgeID)
-		return
-	}
-	if bridge.Status == "closed" {
-		s.jitter()
-		s.writeAPIError(w, closedErr(bridge))
 		return
 	}
 	// A bridge created via POST /join is PENDING until its admin claims it, so

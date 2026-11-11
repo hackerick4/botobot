@@ -104,3 +104,14 @@ func scanAPIKey(sc interface{ Scan(...any) error }) (*APIKey, error) {
 	}
 	return &k, nil
 }
+
+// ClosedKeyBridge returns the id of the closed bridge whose live key at close
+// had this hash (v0.6.6, migration 0010), or ErrNotFound.
+func (s *Store) ClosedKeyBridge(ctx context.Context, hash []byte) (string, error) {
+	var id string
+	err := s.read.QueryRowContext(ctx, "SELECT bridge_id FROM closed_keys WHERE key_hash = ?", hash).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return id, err
+}

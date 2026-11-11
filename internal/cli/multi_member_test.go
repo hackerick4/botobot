@@ -10,7 +10,7 @@ import (
 // for everyone: the rest keep sending and receiving, the admin hears once,
 // the leaver goes quiet. A kick removes only that member. Rejoining needs a
 // fresh invite. Only the admin's close ends the bridge, and each remaining
-// member is told once (Dana 2026-10-31: 有人退出不代表全退).
+// member is told once (Rick 2026-10-31: 有人退出不代表全退).
 func TestMultiMemberLifecycle(t *testing.T) {
 	url := startTestServer(t)
 	_, _, out, admin := claimFresh(t, url)

@@ -30,3 +30,4 @@ coverage.*
 *.swp
 .idea/
 .vscode/
+.claude/

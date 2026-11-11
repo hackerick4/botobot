@@ -176,8 +176,11 @@ func (s *Server) authedGrace(limit limitFunc, fn handlerFunc) http.HandlerFunc {
 
 func (s *Server) authedOpt(requireAdmin, bridgeScoped, grace bool, limit limitFunc, fn handlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Closed bridges answer 410 to any bridge-scoped request even though the
-		// caller's keys were deleted on close (DEV_SPEC §6.1, §11).
+		// Closed bridges answer 410 to their own former members even though the
+		// keys were deleted on close (DEV_SPEC §6.1, §11). v0.6.6: anyone else
+		// falls through to normal auth and gets what an unknown bridge gives
+		// (401 without a valid key, 404 with another bridge's key), so the
+		// tombstone does not tell outsiders that the id ever existed.
 		if bridgeScoped {
 			if b, err := s.store.GetBridge(r.Context(), r.PathValue("bridge_id")); err == nil && b.Status == "closed" {
 				open := b.GraceUntil != nil && s.clock.Now().UnixMilli() < *b.GraceUntil
@@ -187,7 +190,7 @@ func (s *Server) authedOpt(requireAdmin, bridgeScoped, grace bool, limit limitFu
 						s.keyCache.clear()
 					}
 				}
-				if !grace || !open {
+				if (!grace || !open) && s.formerMember(r, b) {
 					s.writeAPIError(w, closedErr(b))
 					return
 				}
@@ -283,4 +286,22 @@ func (s *Server) touchAdmin(r *http.Request, bridgeID string) {
 	if err := s.store.TouchAdminActive(r.Context(), bridgeID, now.UnixMilli()); err != nil {
 		s.logger.Warn("touch admin active failed", "bridge_id", bridgeID, "err_code", storeErr(err).code)
 	}
+}
+
+// formerMember reports whether the request's land key belongs (or belonged at
+// close) to the closed bridge b. Entry keys are handled by
+// authenticateEntryOnBridge, which answers 410 only for the entry's own line.
+func (s *Server) formerMember(r *http.Request, b *store.Bridge) bool {
+	token, ok := auth.ParseBearer(r.Header.Get("Authorization"))
+	if !ok || auth.IsEntryKey(token) {
+		return false
+	}
+	hash := auth.Hash(s.pepper, token)
+	if k, err := s.store.GetAPIKeyByHash(r.Context(), hash); err == nil {
+		if l, err := s.store.GetLand(r.Context(), k.LandID); err == nil {
+			return l.BridgeID == b.ID
+		}
+	}
+	id, err := s.store.ClosedKeyBridge(r.Context(), hash)
+	return err == nil && id == b.ID
 }

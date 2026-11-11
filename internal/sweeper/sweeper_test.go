@@ -32,7 +32,7 @@ func newStore(t *testing.T, clk clock.Clock) *store.Store {
 func makeBridge(t *testing.T, st *store.Store) string {
 	t.Helper()
 	b, err := st.CreateBridge(context.Background(), store.CreateBridgeParams{
-		Name: "ACME x Dana", MaxLands: 32, LandsCanInvite: true,
+		Name: "ACME x Rick", MaxLands: 32, LandsCanInvite: true,
 		RateLimitPerMin: 30, QueueQuotaBytes: 1 << 30,
 	})
 	if err != nil {

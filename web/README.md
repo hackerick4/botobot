@@ -16,8 +16,7 @@ built output is committed** because CI (and the Go build) has no Node toolchain;
 
 ## Rebuild
 
-The libraries are vendored (not committed here) at
-`./web/node_modules`:
+Install the pinned libraries under `web/node_modules` (not committed here):
 
 | package  | version |
 |----------|---------|
@@ -25,7 +24,7 @@ The libraries are vendored (not committed here) at
 | gsap     | 3.15.0  |
 
 ```sh
-# from the repo root, with the vendored libs:
+# from the repo root, after `cd web && npm install` (default LIBS=web/node_modules):
 scripts/build-site.sh
 
 # or point at your own install (must match the versions above):

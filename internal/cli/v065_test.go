@@ -73,7 +73,7 @@ func TestLinesEnded(t *testing.T) {
 	}
 }
 
-// Dana 2026-11-03 20:41: the audit lines carry no 主人.
+// Rick 2026-11-03 20:41: the audit lines carry no 主人.
 func TestReleasedNowLineNeutral(t *testing.T) {
 	n := releaseNotice{ID: "h_x", Hash: "0123456789abcdef", ReleasedMS: 1}
 	zh, en := releasedNowLine(n, false), releasedNowLine(n, true)

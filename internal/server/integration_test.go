@@ -192,9 +192,9 @@ type createdBridge struct {
 func (ts *testServer) createBridge(t *testing.T, handle string, k testLand) createdBridge {
 	t.Helper()
 	body := createBridgeReq{
-		Name: "ACME x Dana",
+		Name: "ACME x Rick",
 		Land: landBlock{
-			Profile: landProfileInput{Handle: handle, DisplayName: "Dana Bot", OwnerName: "Dana"},
+			Profile: landProfileInput{Handle: handle, DisplayName: "Rick Bot", OwnerName: "Rick"},
 			Key:     k.keyInput(t),
 		},
 	}
@@ -245,7 +245,7 @@ func (ts *testServer) join(t *testing.T, bridgeID, code, handle string, k testLa
 
 func TestJoinWrongCodeThenIPBackoff(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 
 	const ip = "203.0.113.5:40000"
 	// Five wrong guesses from one IP: each is 401 join_failed.
@@ -270,7 +270,7 @@ func TestJoinWrongCodeThenIPBackoff(t *testing.T) {
 
 func TestJoinBridgeLockAfterTwenty(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 
 	// Twenty wrong guesses from distinct IPs in one /24 (a distributed attack):
 	// each 401, no single IP backs off, and the subnet 1h/30 ban is not reached.
@@ -295,7 +295,7 @@ func TestJoinBridgeLockAfterTwenty(t *testing.T) {
 
 func TestLandSetVersionIncrementsOnJoin(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.legacy(t, ts.createBridge(t, "dana-bot", newTestLand(t)))
+	b := ts.legacy(t, ts.createBridge(t, "sample-bot", newTestLand(t)))
 
 	// Fresh bridge: version 1 (set at create, not bumped).
 	if v := ts.bridgeVersion(t, b); v != 1 {
@@ -343,7 +343,7 @@ func (ts *testServer) bridgeVersion(t *testing.T, b createdBridge) int64 {
 
 func TestRekeyEmitsKeyChangedEvent(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 
 	member := newTestLand(t)
 	status, jm := ts.join(t, b.bridgeID, b.code, "amy-bot", member, "192.0.2.20:1")
@@ -425,7 +425,7 @@ func itoa(i int) string {
 
 func TestErrorCodes(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.legacy(t, ts.createBridge(t, "dana-bot", newTestLand(t)))
+	b := ts.legacy(t, ts.createBridge(t, "sample-bot", newTestLand(t)))
 
 	t.Run("missing auth -> 401 unauthorized", func(t *testing.T) {
 		status, m, _ := ts.do(t, http.MethodGet, "/v1/me", nil, reqOpts{})
@@ -482,7 +482,7 @@ func TestErrorCodes(t *testing.T) {
 	t.Run("handle_taken -> 409", func(t *testing.T) {
 		// Fresh code (the earlier subtest consumed the one-time code) so the join
 		// reaches the handle check rather than failing as a used code.
-		status, m := ts.join(t, b.bridgeID, ts.rotateCode(t, b), "dana-bot", newTestLand(t), "192.0.2.40:1") // admin's handle
+		status, m := ts.join(t, b.bridgeID, ts.rotateCode(t, b), "sample-bot", newTestLand(t), "192.0.2.40:1") // admin's handle
 		if status != http.StatusConflict || errCode(m) != "handle_taken" {
 			t.Fatalf("got %d %q", status, errCode(m))
 		}
@@ -491,7 +491,7 @@ func TestErrorCodes(t *testing.T) {
 
 func TestBridgeFull(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.MaxLands = 1 })
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 	// The admin already fills the single slot; a correct code now yields 409.
 	status, m := ts.join(t, b.bridgeID, b.code, "amy-bot", newTestLand(t), "192.0.2.50:1")
 	if status != http.StatusConflict || errCode(m) != "bridge_full" {
@@ -501,7 +501,7 @@ func TestBridgeFull(t *testing.T) {
 
 func TestCloseBridgeThenGone(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 
 	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID, nil, reqOpts{token: b.token})
 	if status != http.StatusOK || m["closed"] != true {
@@ -521,7 +521,7 @@ func ptr[T any](v T) *T { return &v }
 func TestLogsHaveNoSecretsAcrossEndpoints(t *testing.T) {
 	ts := newIntegServer(t, nil)
 	admin := newTestLand(t)
-	b := ts.createBridge(t, "dana-bot", admin)
+	b := ts.createBridge(t, "sample-bot", admin)
 
 	// Exercise a representative spread of endpoints with real secrets in play.
 	member := newTestLand(t)
@@ -672,7 +672,7 @@ func TestLogsHaveNoSecretsEveryRoute(t *testing.T) {
 // both as 413 payload_too_large with the §6.2 error shape.
 func TestOversizeBodyRejected(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.MaxEnvelopeBytes = 4096 })
-	b := ts.createBridge(t, "dana-bot", newTestLand(t))
+	b := ts.createBridge(t, "sample-bot", newTestLand(t))
 
 	// Valid-leading JSON whose string value overruns the cap, so the decoder
 	// reads past the limit and MaxBytesReader fires (a non-JSON blob would just

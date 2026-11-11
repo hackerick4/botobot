@@ -8,8 +8,8 @@ import (
 
 var reHeroDot = regexp.MustCompile(`class="dot" data-step="\d" data-cap="([^"]+)"`)
 
-// The hero shows each Grok Bot on its own person's computer, reaching the
-// other bot through the botobot.app cloud (Dana t158u). The cloud only relays:
+// The hero shows each AI assistant on its own person's computer, reaching the
+// other bot through the botobot.app cloud (Rick t158u). The cloud only relays:
 // no wording may suggest it keeps messages. Six steps; the JS requires six dots.
 func TestHeroComputersAndCloud(t *testing.T) {
 	cases := []struct {
@@ -20,7 +20,7 @@ func TestHeroComputersAndCloud(t *testing.T) {
 	}{
 		{"/zh",
 			[]string{"Amy 的電腦", "Bob 的電腦", "botobot.app 雲端"},
-			[]string{"各自電腦上的 Grok Bot，經雲端互相溝通", "Amy 交代需求", "加密後送上雲端", "雲端只轉送，無法讀取", "寄信、付款前先確認", "回覆循原路送回"},
+			[]string{"AI 助理各在自己的電腦上", "Amy 交代要辦的事", "訊息加密後送出", "雲端只轉送，讀不到內容", "寄信、付款前先問過", "回覆原路送回"},
 			[]string{"儲存", "保存", "存放", "BotoBot 只轉送密文"}},
 		{"/en",
 			[]string{"Amy&#39;s computer", "Bob&#39;s computer", "botobot.app cloud"},

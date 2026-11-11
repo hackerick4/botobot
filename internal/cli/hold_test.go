@@ -99,7 +99,7 @@ func TestHoldDLPAndReleaseFriction(t *testing.T) {
 // A benign message is still sent immediately (no friction for normal chat).
 func TestHoldBenignSendsNow(t *testing.T) {
 	p := setupPair(t)
-	for _, body := range []string{"好，週五下午三點可以", "Sounds good, see you Friday at 3pm.", "My email is dana@example.com"} {
+	for _, body := range []string{"好，週五下午三點可以", "Sounds good, see you Friday at 3pm.", "My email is rick@example.com"} {
 		out, e, c := runStdin(t, body, "send", "--home", p.homeA, "--bridge", p.bridgeID, "--stdin")
 		if c != exitOK || !strings.Contains(out, `"type":"sent"`) {
 			t.Fatalf("benign %q not sent: %s %s", body, out, e)

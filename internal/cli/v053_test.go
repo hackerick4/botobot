@@ -11,11 +11,11 @@ import (
 func TestHandleFromBotName(t *testing.T) {
 	never := func(string) bool { return false }
 	for _, c := range []struct{ bot, owner, prefix string }{
-		{"Home-Panel", "Dana Kao", "home-panel-"},
-		{"Grok Bot A", "Dana Kao", "grok-bot-a-"},
-		{"小幫手", "Dana Kao", "xiaobangshou-"}, // v0.5.4: pinyin
-		{"ハナコ", "Dana Kao", "dana-kao-bot-"},
-		{"", "Dana Kao", "dana-kao-bot-"},
+		{"Sample Desk", "Rick Chiu", "sample-desk-"},
+		{"Grok Bot A", "Rick Chiu", "grok-bot-a-"},
+		{"小幫手", "Rick Chiu", "xiaobangshou-"}, // v0.5.4: pinyin
+		{"ハナコ", "Rick Chiu", "rick-chiu-bot-"},
+		{"", "Rick Chiu", "rick-chiu-bot-"},
 		{"", "", "bot-"},
 	} {
 		h := newHandle(c.bot, c.owner, never)
@@ -26,11 +26,11 @@ func TestHandleFromBotName(t *testing.T) {
 	url := startTestServer(t)
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("BB_HOME", "")
-	out, e, rc := run(t, "create", "--server", url, "--name", "B", "--display-name", "Home-Panel", "--owner", "Dana Kao")
-	if rc != exitOK || !strings.Contains(out, `"handle":"home-panel-`) {
+	out, e, rc := run(t, "create", "--server", url, "--name", "B", "--display-name", "Sample Desk", "--owner", "Rick Chiu")
+	if rc != exitOK || !strings.Contains(out, `"handle":"sample-desk-`) {
 		t.Fatalf("create with --display-name: %d %s %s", rc, out, e)
 	}
-	if _, e, rc := run(t, "create", "--server", url, "--name", "B", "--display-name", "BOT NAME", "--owner", "Dana Kao"); rc != exitUsage || !strings.Contains(e, "placeholder_name") {
+	if _, e, rc := run(t, "create", "--server", url, "--name", "B", "--display-name", "BOT NAME", "--owner", "Rick Chiu"); rc != exitUsage || !strings.Contains(e, "placeholder_name") {
 		t.Fatalf("copied BOT NAME: %d %s", rc, e)
 	}
 }

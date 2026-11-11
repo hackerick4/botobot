@@ -89,6 +89,7 @@ func cmdForget(a *app, args []string) *cliError {
 	switch {
 	case remaining == 0:
 		sess.pr.raw("NEXT: 此 Bot 已無 bridge，刪掉「bot-bridge inbox」routine（不是暫停），不必再問主人。")
+		sess.pr.raw(dedicatedEndLine(false))
 		sess.pr.raw(keepNameLine(bc.Handle, false))
 	case sess.ks.liveCount() == 0:
 		sess.pr.raw(noLiveRoutineLine(false))

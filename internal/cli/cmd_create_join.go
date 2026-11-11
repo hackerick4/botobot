@@ -26,7 +26,7 @@ func cmdCreate(a *app, args []string) *cliError {
 	g, _, e := a.parse("create", args, func(fs *flag.FlagSet) {
 		fs.StringVar(&name, "name", "", "bridge name (required)")
 		fs.StringVar(&description, "description", "", "bridge description")
-		fs.StringVar(&handle, "handle", "", "keep a stable name: the name this bot had before; otherwise leave out (a unique name is picked from --display-name, e.g. home-panel-xxxx)")
+		fs.StringVar(&handle, "handle", "", "keep a stable name: the name this bot had before; otherwise leave out (a unique name is picked from --display-name, e.g. helper-bot-xxxx)")
 		fs.StringVar(&displayName, "display-name", "", "this bot's own name; the bridge name of this bot (handle) is made from it")
 		fs.StringVar(&owner, "owner", "", "your owner's name (unverified)")
 		fs.BoolVar(&noMemberInvite, "no-member-invite", false, "members may not read the invite code")
@@ -103,13 +103,15 @@ func cmdJoin(a *app, args []string) *cliError {
 	var link, code, handle, displayName, owner, adminFP, entryLink string
 	var inviteStdin bool
 	var inviteFile string
+	var firstTick bool
 	g, _, e := a.parse("join", args, func(fs *flag.FlagSet) {
+		fs.BoolVar(&firstTick, "first-tick", false, "after joining, run one receive check (tick --now) in the same command, so the channel is confirmed without a second call")
 		fs.BoolVar(&inviteStdin, "invite-stdin", false, "read the whole forwarded invite (link, code, admin fingerprint) from stdin")
 		fs.StringVar(&inviteFile, "invite-file", "", "read the whole forwarded invite from this file instead of stdin")
 		fs.StringVar(&adminFP, "admin-fp", "", "admin fingerprint from the invite (管理者指紋), checked after joining (or set $BB_ADMIN_FP)")
 		fs.StringVar(&link, "link", "", "invite link, e.g. https://host/b/br_… (required)")
 		fs.StringVar(&code, "code", "", "refused: put the invite code in $BB_CODE instead")
-		fs.StringVar(&handle, "handle", "", "keep a stable name: the name this bot had before; otherwise leave out (a unique name is picked from --display-name, e.g. home-panel-xxxx)")
+		fs.StringVar(&handle, "handle", "", "keep a stable name: the name this bot had before; otherwise leave out (a unique name is picked from --display-name, e.g. helper-bot-xxxx)")
 		fs.StringVar(&displayName, "display-name", "", "this bot's own name; the bridge name of this bot (handle) is made from it")
 		fs.StringVar(&owner, "owner", "", "your owner's name (unverified)")
 		fs.StringVar(&entryLink, "entry", "", "a public entry link, e.g. https://host/e/pe_… (no invite code needed)")
@@ -140,6 +142,9 @@ func cmdJoin(a *app, args []string) *cliError {
 		}
 		l, c, fp, perr := parseInvite(text)
 		if perr != nil {
+			if looksLikeInvitePlaceholder(text) {
+				return &cliError{Code: "invite_unreadable", Message: "join: that is the claim JSON \"invite\" field (a pointer), not the invite. Pass the full INVITE_MESSAGE block: the lines from INVITE_MESSAGE_BEGIN to INVITE_MESSAGE_END in the creator's output (e.g. sed -n '/^INVITE_MESSAGE_BEGIN$/,/^INVITE_MESSAGE_END$/p').", Exit: exitUsage}
+			}
 			return &cliError{Code: "invite_unreadable", Message: "join: " + perr.Error() + ". Ask the owner to forward the invite again, unchanged.", Exit: exitUsage}
 		}
 		link, code, adminFP = l, c, fp
@@ -196,6 +201,7 @@ func cmdJoin(a *app, args []string) *cliError {
 		},
 	}
 
+	progress(a, "joining", prompts.IsEnglish(joinLang), "正在加入通道…", "Joining the channel…")
 	cli := newClient(&http.Client{Timeout: g.timeout}, server, "")
 	var resp createJoinResp
 	if ce := cli.do(context.Background(), http.MethodPost, "/v1/bridges/"+bridgeID+"/join", body, &resp); ce != nil {
@@ -237,6 +243,36 @@ func cmdJoin(a *app, args []string) *cliError {
 		return &cliError{Code: "admin_fingerprint_mismatch", Message: "join: the admin fingerprint does not match the invite; stop, do not create the routine, and tell your owner", Exit: exitGeneral}
 	}
 	sess.printRoutine(routine, prior, joinLang, sess.ks.entryCount() > 0)
+	// Progress after a fingerprint match: one short line. Never claims connected
+	// and never infers a routine from tick state. If this bot has no routine yet
+	// (first bridge, no entry) the receive path still needs enabling (S5);
+	// otherwise the existing routine may already cover it, stated conditionally (S6).
+	if prior == 0 && sess.ks.entryCount() == 0 {
+		sess.pr.raw("PROGRESS: joined_no_recv")
+		if prompts.IsEnglish(joinLang) {
+			sess.pr.raw("Joined. One step left: enable receiving (the 5-minute routine above); while the native schedule is being created, please wait (this is not encryption).")
+		} else {
+			sess.pr.raw("已加入。還差一步：啟用收信（上面的每 5 分鐘 routine）；建立原生排程期間請稍候（這不是加密）。")
+		}
+	} else {
+		sess.pr.raw("PROGRESS: joined")
+		if prompts.IsEnglish(joinLang) {
+			sess.pr.raw("Joined. If your receiving routine is already enabled, messages will arrive; otherwise enable it as above.")
+		} else {
+			sess.pr.raw("已加入。若收信排程已啟用，即可接收；否則照上面啟用。")
+		}
+	}
+	if firstTick {
+		// Confirm the receive path in the same invocation, so the joiner reaches
+		// a verified-receive state without a second bot command. Flush the join
+		// output first, then run the real tick on this one bridge. The join has
+		// already succeeded and the routine line is printed, so a tick error is
+		// reported like any other tick error and does not undo the join.
+		if ce := sess.pr.done(); ce != nil {
+			return ce
+		}
+		return cmdTick(a, []string{"--bridge", resp.Bridge.BridgeID, "--home", g.home, "--now"})
+	}
 	return sess.pr.done()
 }
 

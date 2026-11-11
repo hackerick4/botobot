@@ -47,6 +47,7 @@ func (s *session) recordSend(bridgeID string) *cliError {
 	now := s.app.now()
 	ts.SessionSends++
 	ts.HourSends = append(pruneOlder(ts.HourSends, now, sendHourWindow), now.UnixMilli())
+	ts.markActivity(now) // v0.6.9: the routine checks on every run again
 	if err := s.ks.saveTickState(bridgeID, ts); err != nil {
 		return generalErrorf("save tick state: %v", err)
 	}

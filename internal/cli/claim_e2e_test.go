@@ -73,7 +73,7 @@ func TestE2EJoinClaim(t *testing.T) {
 
 	// --- claim (admin) via the CLI, using link + token from the response ---
 	out, errOut, code := run(t, "claim", "--home", homeA,
-		"--link", inviteLink, "--token", claimToken, "--handle", "dana-bot", "--owner", "Dana")
+		"--link", inviteLink, "--token", claimToken, "--handle", "sample-bot", "--owner", "Rick")
 	if code != exitOK {
 		t.Fatalf("claim exit %d, stderr=%s", code, errOut)
 	}

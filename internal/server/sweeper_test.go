@@ -25,11 +25,11 @@ func (ts *testServer) newSweeper(inactivity time.Duration) *sweeper.Sweeper {
 
 func TestInboxTTLExpiredBySweeper(t *testing.T) {
 	ts := newIntegServer(t, func(c *config.Config) { c.RateInboxPerMin = 100000 })
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.50:1")
 
-	env := ts.encrypt(t, dana, b, "c-ttl-0001", "fades away")
-	if status, m := ts.send(t, dana.token, b.bridgeID, env); status != http.StatusAccepted {
+	env := ts.encrypt(t, rick, b, "c-ttl-0001", "fades away")
+	if status, m := ts.send(t, rick.token, b.bridgeID, env); status != http.StatusAccepted {
 		t.Fatalf("send = %d (%v)", status, m)
 	}
 
@@ -53,7 +53,7 @@ func TestInboxTTLExpiredBySweeper(t *testing.T) {
 		t.Fatalf("post-expiry message count = %d, want 0", n)
 	}
 	// ...and the sender sees it as `expired` (status kept 24h after the update).
-	status, sm, _ := ts.do(t, http.MethodGet, "/v1/bridges/"+b.bridgeID+"/messages/c-ttl-0001/status", nil, reqOpts{token: dana.token})
+	status, sm, _ := ts.do(t, http.MethodGet, "/v1/bridges/"+b.bridgeID+"/messages/c-ttl-0001/status", nil, reqOpts{token: rick.token})
 	if status != http.StatusOK {
 		t.Fatalf("status endpoint = %d (%v)", status, sm)
 	}
@@ -67,11 +67,11 @@ func TestInboxTTLExpiredBySweeper(t *testing.T) {
 
 func TestAdminLeaveClosesBridge(t *testing.T) {
 	ts := newIntegServer(t, nil)
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.60:1")
 
 	// Admin leaves (DELETE self): the bridge closes immediately (admin_left).
-	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+dana.landID, nil, reqOpts{token: dana.token})
+	status, m, _ := ts.do(t, http.MethodDelete, "/v1/bridges/"+b.bridgeID+"/lands/"+rick.landID, nil, reqOpts{token: rick.token})
 	if status != http.StatusOK || m["bridge_closed"] != true {
 		t.Fatalf("admin leave = %d %v, want 200 bridge_closed:true", status, m)
 	}
@@ -86,7 +86,7 @@ func TestAdminInactivityClosesBridge(t *testing.T) {
 		c.RateInboxPerMin = 100000
 		c.RateOtherPerMin = 100000
 	})
-	dana, b := ts.newAdmin(t, "dana-bot")
+	rick, b := ts.newAdmin(t, "sample-bot")
 	amy := ts.newMember(t, b, "amy-bot", "192.0.2.70:1")
 
 	const window = 168 * time.Hour // 7 days
@@ -96,7 +96,7 @@ func TestAdminInactivityClosesBridge(t *testing.T) {
 	// it, so the bridge is never closed.
 	for i := 0; i < 3; i++ {
 		ts.clk.Advance(window - time.Hour)
-		if status, _, _ := ts.do(t, http.MethodGet, "/v1/me", nil, reqOpts{token: dana.token}); status != http.StatusOK {
+		if status, _, _ := ts.do(t, http.MethodGet, "/v1/me", nil, reqOpts{token: rick.token}); status != http.StatusOK {
 			t.Fatalf("round %d admin poll = %d", i, status)
 		}
 		if res, err := sw.RunOnce(context.Background()); err != nil || len(res.ClosedInactive) != 0 {
