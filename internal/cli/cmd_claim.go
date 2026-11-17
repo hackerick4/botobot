@@ -221,20 +221,18 @@ func cmdClaim(a *app, args []string) *cliError {
 	inviteCTA := func() {
 		sess.pr.raw("PROGRESS: invite_ready")
 		if lang == "en" {
-			sess.pr.raw("Next step: send the whole INVITE block above, or the INVITE_FILE path, privately to the other person.")
+			sess.pr.raw("Pass the invite above to the other person.")
 		} else {
-			sess.pr.raw("下一步：把上面的 INVITE 區塊、或 INVITE_FILE 的路徑，私下傳給對方。")
+			sess.pr.raw("把上面那則邀請傳給對方。")
 		}
 	}
 	if invite != "" && lang == "en" {
 		sess.pr.raw("NOTIFY_OWNER: " + claimNotice(resp.Bridge.Name, "en"))
-		sess.pr.raw("NOTIFY_OWNER: " + ownerCautionEN)
 		emitInviteFileLine()
 		sess.pr.raw(inviteBlock(invite))
 		inviteCTA()
 	} else if invite != "" {
 		sess.pr.raw("NOTIFY_OWNER: " + claimNotice(resp.Bridge.Name, lang))
-		sess.pr.raw("NOTIFY_OWNER: " + ownerCautionZH)
 		emitInviteFileLine()
 		sess.pr.raw(inviteBlock(invite))
 		inviteCTA()

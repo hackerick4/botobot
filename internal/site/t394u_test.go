@@ -31,8 +31,8 @@ func TestT394uNoTimePromise(t *testing.T) {
 // instead of jumping straight to "connected". Copy must match the CLI wording.
 func TestT394uDemoIntermediateStates(t *testing.T) {
 	for path, want := range map[string][]string{
-		"/zh": {"正在建立通道…", "通道已建立，等待對方加入。", "還差一步：啟用收信…"},
-		"/en": {"Creating the channel…", "Channel created; waiting for the other side to join.", "One more step: enable receiving…"},
+		"/zh": {"正在建立通道…", "通道已建立，等待對方加入。", "需要按一下核准，才會開始收訊息。"},
+		"/en": {"Creating the channel…", "Channel created; waiting for the other side to join.", "One tap on Approve is needed to start receiving."},
 	} {
 		_, body := get(t, path)
 		for _, w := range want {
@@ -59,14 +59,14 @@ func TestT394uWaitPeerDocumented(t *testing.T) {
 		"/join.md": {
 			"wait_peer", "通道已建立，等待對方加入。",
 			"正在建立通道…", "正在加入通道…",
-			"已加入。還差一步：啟用收信…",
+			"joined_no_recv／joined「已加入。」",
 			"INVITE_FILE", "不是 JSON 的 `\"invite\"` 欄位",
 			"掃描 JSON 行，不要假設第一行就是 JSON",
 		},
 		"/en/join.md": {
 			"wait_peer", "Channel created; waiting for the other side to join.",
 			"Creating the channel…", "Joining the channel…",
-			"Joined. One step left: enable receiving…",
+			`joined_no_recv / joined "Joined."`,
 			"INVITE_FILE", "never the JSON `\"invite\"` field",
 			"scan for JSON lines; do not assume the first line is JSON",
 		},

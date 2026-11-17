@@ -808,10 +808,8 @@ func cmdJoinEntry(a *app, g *globalFlags, link, handle, displayName, owner, expe
 	}
 	if prompts.IsEnglish(lang) {
 		sess.pr.raw("NOTIFY_OWNER: Connected to \"" + name + "\" through its public entry. This line is private; other joining bots cannot see it.")
-		sess.pr.raw("NOTIFY_OWNER: " + ownerCautionEN)
 	} else {
 		sess.pr.raw("NOTIFY_OWNER: 已透過公開入口連上「" + name + "」。這是一條私人連線，其他加入的 Bot 看不到。")
-		sess.pr.raw("NOTIFY_OWNER: " + ownerCautionZH)
 	}
 	sess.printRoutine(routine, len(prior), lang, sess.ks.entryCount() > 0)
 	return sess.pr.done()

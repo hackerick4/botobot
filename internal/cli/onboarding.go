@@ -180,8 +180,8 @@ func checkAdminFP(lc *landsCache, selfID, expect string) (string, string) {
 // Owner-facing notices (v0.5.2): only what to do and what to watch out for.
 // Security details (admin, fingerprint, polling) stay in bot-facing output.
 const (
-	claimNoticeZH  = "bridge 已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。"
-	claimNoticeEN  = "Bridge created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant."
+	claimNoticeZH  = "bridge 已建立。下一則是邀請，請把它私下傳給對方。"
+	claimNoticeEN  = "Bridge created. The next message is the invite: pass it privately to the other person."
 	ownerCautionZH = "注意：一般訊息可直接收發；只有寄信、付款或涉及個資的動作，送出前才需先確認。"
 	ownerCautionEN = "Note: ordinary messages are sent and received directly; only emails, payments and anything with personal data are confirmed before sending."
 )
@@ -211,11 +211,11 @@ func claimNotice(name, lang string) string {
 	n := claimNoticeName(name)
 	switch {
 	case lang == "en" && n != "":
-		return "\"" + n + "\" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant."
+		return "\"" + n + "\" created. The next message is the invite: pass it privately to the other person."
 	case lang == "en":
 		return claimNoticeEN
 	case n != "":
-		return "「" + n + "」已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。"
+		return "「" + n + "」已建立。下一則是邀請，請把它私下傳給對方。"
 	}
 	return claimNoticeZH
 }
@@ -252,13 +252,13 @@ func joinOwnerNotice(bridgeID, name, adminFP, check string, lang ...string) stri
 		if n != "" && n != "?" {
 			where = "\"" + n + "\""
 		}
-		return "NOTIFY_OWNER: Joined " + where + ".\nNOTIFY_OWNER: " + ownerCautionEN
+		return "NOTIFY_OWNER: Joined " + where + "."
 	}
 	where := " bridge"
 	if n != "" && n != "?" {
 		where = "「" + n + "」"
 	}
-	return "NOTIFY_OWNER: 已加入" + where + "。\nNOTIFY_OWNER: " + ownerCautionZH
+	return "NOTIFY_OWNER: 已加入" + where + "。"
 }
 
 // maxInviteBytes bounds what join --invite-stdin reads.

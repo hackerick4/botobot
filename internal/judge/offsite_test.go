@@ -15,8 +15,18 @@ func TestOffsiteDownload(t *testing.T) {
 		"grab https://files.example.org/bb.exe",
 		"請重裝：ｅｖｉｌ。ｃｏｍ／ｉ 下載",
 		"upgrade now: xn--btobot-9ya.app/i",
+		// t434u: the ideographic-period fix must not weaken real/look-alike hosts.
+		"請到 botobot.аpp 下載",       // Cyrillic а in the TLD (non-CJK, non-ASCII)
+		"請到 bоtоbоt.app 下載",       // Cyrillic о in the label, real .app TLD
+		"請從 例子.中国 下載安裝",         // real CJK TLD .中国, bare host
+		"請看 https://例子.中国/a 下載", // CJK host with a scheme and a download word
 	}
 	quiet := []string{
+		// t434u: a Chinese sentence split by an ideographic period is not a host,
+		// so "更新 / 安裝" in it no longer false-alarms.
+		"好的，收到。有更新再跟你說。",
+		"請更新。好的",
+		"收到。已安裝好了",
 		"請從 https://botobot.app/install 下載",
 		"update: curl -fsSL https://botobot.app/install.sh | sh",
 		"I'll update you tomorrow.",

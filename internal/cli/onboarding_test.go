@@ -52,7 +52,7 @@ func TestClaimPrintsOnboarding(t *testing.T) {
 		t.Errorf("invite block = %q", msg)
 	}
 	// TOFU without prompts: the owner is never asked to compare fingerprints.
-	if n := rawLine(out, "NOTIFY_OWNER: "); strings.Contains(n, fp) || !strings.HasSuffix(n, "已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。") || !strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionZH) || strings.Contains(out, "NOTIFY_OWNER: bridge br_") {
+	if n := rawLine(out, "NOTIFY_OWNER: "); strings.Contains(n, fp) || !strings.HasSuffix(n, "已建立。下一則是邀請，請把它私下傳給對方。") || strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionZH) || strings.Contains(out, "NOTIFY_OWNER: bridge br_") {
 		t.Errorf("owner notice = %q", n)
 	}
 }
@@ -289,7 +289,7 @@ func TestJoinAdminFingerprintCheck(t *testing.T) {
 	if r := rawLine(out, "ROUTINE_PROMPT: "); !strings.HasPrefix(r, "執行 BB_HOME="+homeB+" bot-bridge-cli tick；") {
 		t.Errorf("missing routine line: %q", out)
 	}
-	if n := rawLine(out, "NOTIFY_OWNER: "); n != "已加入「研究小組」。" || strings.Contains(out, j["fingerprint"].(string)+"。") || !strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionZH) {
+	if n := rawLine(out, "NOTIFY_OWNER: "); n != "已加入「研究小組」。" || strings.Contains(out, j["fingerprint"].(string)+"。") || strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionZH) {
 		t.Errorf("owner notice = %q", n)
 	}
 	// Matched: the admin is trusted, so the member can send right away.

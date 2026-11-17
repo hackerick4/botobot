@@ -62,6 +62,15 @@ type tickState struct {
 	FollowChainStartMS int64   `json:"follow_chain_start_ms,omitempty"`
 	FollowLastMS       int64   `json:"follow_last_ms,omitempty"`
 	FollowWakes        int     `json:"follow_wakes,omitempty"`
+	// AutoReplyPref (t434u) is the owner's per-bridge answer to "keep replying
+	// to this kind of ordinary message for me?": "" unset, "yes", or "no". Set
+	// by `tick auto-reply --bridge … yes|no`; surfaced to the bot as an
+	// AUTO_REPLY_PREF line so it knows whether to reply-then-report or ask first.
+	AutoReplyPref string `json:"auto_reply_pref,omitempty"`
+	// WaitPeerTold (t434u) records that the owner was already told once that the
+	// channel is created and waiting for the other side, so an admin bridge that
+	// stays empty for many ticks does not repeat that line every run.
+	WaitPeerTold bool `json:"wait_peer_told,omitempty"`
 }
 
 // tickSeen bounds the dedupe set (Batch 1 item 1: ~last 1000 ids / 48h).

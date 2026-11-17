@@ -213,7 +213,7 @@ func TestEnglishMembershipNotices(t *testing.T) {
 	if rc != exitOK {
 		t.Fatalf("join exit %d: %s", rc, e)
 	}
-	if n := rawLine(jo, "NOTIFY_OWNER: "); n != "Joined \"Team\"." || !strings.Contains(jo, "NOTIFY_OWNER: "+ownerCautionEN) {
+	if n := rawLine(jo, "NOTIFY_OWNER: "); n != "Joined \"Team\"." || strings.Contains(jo, "NOTIFY_OWNER: "+ownerCautionEN) {
 		t.Errorf("member join notice = %q", n)
 	}
 	ao, _, _ := run(t, "tick", "--home", admin, "--bridge", br)

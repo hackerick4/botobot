@@ -33,8 +33,12 @@ func TestClaimProgressAndInviteCTA(t *testing.T) {
 	if !strings.Contains(out, "INVITE_FILE: ") {
 		t.Fatalf("invite_ready path lost INVITE_FILE:\n%s", out)
 	}
-	if !strings.Contains(out, "PROGRESS: invite_ready") || !strings.Contains(out, "下一步：把上面的 INVITE 區塊、或 INVITE_FILE 的路徑，私下傳給對方。") {
+	if !strings.Contains(out, "PROGRESS: invite_ready") || !strings.Contains(out, "把上面那則邀請傳給對方。") {
 		t.Fatalf("missing S2 invite-pass CTA:\n%s", out)
+	}
+	// t434u: the owner next-step must not carry the INVITE block / INVITE_FILE jargon.
+	if strings.Contains(out, "INVITE 區塊") {
+		t.Fatalf("invite CTA still mentions the INVITE block to the owner:\n%s", out)
 	}
 	// Never label the wait as encryption.
 	if strings.Contains(out, "加密中") {
@@ -67,9 +71,15 @@ func TestJoinProgressAndReceiveCTA(t *testing.T) {
 	if fl := firstLine(out); !strings.HasPrefix(fl, "{") || !strings.Contains(fl, `"type":"joined"`) {
 		t.Fatalf("first stdout line is not the joined JSON: %q", fl)
 	}
-	// Post-result S5 CTA stays on stdout (after the JSON; relayed to the owner).
-	if !strings.Contains(out, "PROGRESS: joined_no_recv") || !strings.Contains(out, "已加入。還差一步：啟用收信") {
-		t.Fatalf("first-bridge join missing the S5 enable-receiving CTA:\n%s", out)
+	// Post-result marker stays on stdout; the owner line is just "Joined." (t434u:
+	// no routine / encryption mechanism in the owner-facing text).
+	if !strings.Contains(out, "PROGRESS: joined_no_recv") || !strings.Contains(out, "已加入。") {
+		t.Fatalf("first-bridge join missing the joined_no_recv line:\n%s", out)
+	}
+	// The owner-facing line is de-jargoned (bot-facing ROUTINE_* / NEXT lines may
+	// still say routine; only the owner text must be clean).
+	if strings.Contains(out, "還差一步") || strings.Contains(out, "啟用收信") || strings.Contains(out, "這不是加密") {
+		t.Fatalf("joined_no_recv owner line still carries receiving/encryption jargon:\n%s", out)
 	}
 	if strings.Contains(out, "加密中") {
 		t.Fatalf("join wait wrongly labelled 加密中:\n%s", out)
@@ -92,11 +102,11 @@ func TestJoinProgressAndReceiveCTA(t *testing.T) {
 	if c != exitOK {
 		t.Fatalf("join second into home2: %d %s\n%s", c, e, out2)
 	}
-	if !strings.Contains(out2, "PROGRESS: joined") || !strings.Contains(out2, "已加入。若收信排程已啟用，即可接收") {
-		t.Fatalf("second-bridge join missing the S6 conditional CTA:\n%s", out2)
+	if !strings.Contains(out2, "PROGRESS: joined") || !strings.Contains(out2, "已加入。") {
+		t.Fatalf("second-bridge join missing the joined line:\n%s", out2)
 	}
-	if strings.Contains(out2, "還差一步：啟用收信") {
-		t.Fatalf("reuse path wrongly used the S5 create CTA:\n%s", out2)
+	if strings.Contains(out2, "還差一步：啟用收信") || strings.Contains(out2, "收信排程") {
+		t.Fatalf("reuse path still carries receiving-schedule jargon:\n%s", out2)
 	}
 }
 

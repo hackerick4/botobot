@@ -250,16 +250,16 @@ func cmdJoin(a *app, args []string) *cliError {
 	if prior == 0 && sess.ks.entryCount() == 0 {
 		sess.pr.raw("PROGRESS: joined_no_recv")
 		if prompts.IsEnglish(joinLang) {
-			sess.pr.raw("Joined. One step left: enable receiving (the 5-minute routine above); while the native schedule is being created, please wait (this is not encryption).")
+			sess.pr.raw("Joined.")
 		} else {
-			sess.pr.raw("已加入。還差一步：啟用收信（上面的每 5 分鐘 routine）；建立原生排程期間請稍候（這不是加密）。")
+			sess.pr.raw("已加入。")
 		}
 	} else {
 		sess.pr.raw("PROGRESS: joined")
 		if prompts.IsEnglish(joinLang) {
-			sess.pr.raw("Joined. If your receiving routine is already enabled, messages will arrive; otherwise enable it as above.")
+			sess.pr.raw("Joined.")
 		} else {
-			sess.pr.raw("已加入。若收信排程已啟用，即可接收；否則照上面啟用。")
+			sess.pr.raw("已加入。")
 		}
 	}
 	if firstTick {

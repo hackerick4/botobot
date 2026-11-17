@@ -42,7 +42,7 @@ func TestClaimNew(t *testing.T) {
 			t.Errorf("english invite missing %q:\n%s", want, inv)
 		}
 	}
-	if rawLine(out, "NOTIFY_OWNER: ") != claimNotice("Team", "en") || !strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionEN) || strings.Contains(out, "admin. ") {
+	if rawLine(out, "NOTIFY_OWNER: ") != claimNotice("Team", "en") || strings.Contains(out, "NOTIFY_OWNER: "+ownerCautionEN) || strings.Contains(out, "admin. ") {
 		t.Errorf("english owner notice:\n%s", out)
 	}
 	brE := findLine(t, out, "claimed")["bridge_id"].(string)

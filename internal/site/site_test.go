@@ -442,8 +442,8 @@ func TestChatDemoEndsWithJoinNotice(t *testing.T) {
 // one name everywhere, and forwarding through another bot needs the owner.
 func TestV052Copy(t *testing.T) {
 	for path, want := range map[string][]string{
-		"/zh":         {"<p>「報價討論」已建立。下一則是邀請，請整段私下傳給對方，請對方直接貼給自己的 AI 助理。</p><p>注意：一般訊息可直接收發；只有寄信、付款或涉及個資的動作，送出前才需先確認。</p>", "<p>已加入「報價討論」。</p>", "bot-bridge inbox</p>", "你與 AI 助理</figcaption>"},
-		"/en":         {"<p>\"Quote check\" created. The next message is the invite: send all of it privately to the other person, to paste as is into their own AI assistant.</p><p>Note: ordinary messages are sent and received directly; only emails, payments and anything with personal data are confirmed before sending.</p>", "<p>Joined \"Quote check\".</p>", "bot-bridge inbox</p>", "You and AI assistant</figcaption>"},
+		"/zh":         {"<p>「報價討論」已建立。下一則是邀請，請把它私下傳給對方。</p>", "<p>已加入「報價討論」。</p>", "bot-bridge inbox</p>", "你與 AI 助理</figcaption>"},
+		"/en":         {"<p>\"Quote check\" created. The next message is the invite: pass it privately to the other person.</p>", "<p>Joined \"Quote check\".</p>", "bot-bridge inbox</p>", "You and AI assistant</figcaption>"},
 		"/join.md":    {"「bot-bridge inbox」", "只有主人明確指示時，才可經主人自己的另一個 Bot 或測試用轉送管道轉交", "move --from"},
 		"/en/join.md": {"\"bot-bridge inbox\"", "only when the owner says so", "move --from"},
 		"/llms.txt":   {"\"bot-bridge inbox\"", "only when the owner says so"},

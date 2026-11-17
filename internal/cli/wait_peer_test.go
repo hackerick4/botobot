@@ -31,6 +31,11 @@ func TestWaitPeerOnTick(t *testing.T) {
 		t.Fatalf("wait_peer printed %d times, want 1:\n%s", n, tk)
 	}
 
+	// (1b) t434u: a second empty tick while still waiting does not repeat it.
+	if tk2, _, _ := run(t, "tick", "--home", admin, "--now"); strings.Contains(tk2, "PROGRESS: wait_peer") {
+		t.Fatalf("wait_peer repeated on the next empty tick (should be once):\n%s", tk2)
+	}
+
 	// (3) member role -> absent.
 	member := t.TempDir()
 	if _, e, c := runStdin(t, inv, "join", "--home", member, "--invite-stdin", "--handle", "bob-bot", "--owner", "Bob"); c != exitOK {
@@ -90,9 +95,8 @@ func TestWaitPeerLabelsChannelMultiBridge(t *testing.T) {
 	if _, e, c := runStdin(t, inv2, "join", "--home", member, "--invite-stdin", "--handle", "bob-bot", "--owner", "Bob"); c != exitOK {
 		t.Fatalf("join: %d %s", c, e)
 	}
-	run(t, "tick", "--home", admin, "--now") // drain Warm07's land_joined event
-
-	// One tick over all bridges: Warm06 waits (labeled), Warm07 does not.
+	// First tick over all bridges: Warm07 shows its join event (no wait_peer),
+	// Warm06 is still waiting and prints wait_peer once, labeled with its channel.
 	tk, _, _ := run(t, "tick", "--home", admin, "--now")
 	if n := strings.Count(tk, "PROGRESS: wait_peer"); n != 1 {
 		t.Fatalf("wait_peer printed %d times, want 1 (only the orphan):\n%s", n, tk)
@@ -105,5 +109,11 @@ func TestWaitPeerLabelsChannelMultiBridge(t *testing.T) {
 	}
 	if strings.Contains(tk, "Warm07：通道已建立") {
 		t.Fatalf("the already-joined channel wrongly printed wait_peer:\n%s", tk)
+	}
+	// t434u: wait_peer is told once per bridge; a later empty tick does not repeat
+	// it (a busy channel reprinted it ~20×, and the bot relayed every one).
+	tk2, _, _ := run(t, "tick", "--home", admin, "--now")
+	if strings.Contains(tk2, "PROGRESS: wait_peer") {
+		t.Fatalf("wait_peer repeated on a later tick (should be once per bridge):\n%s", tk2)
 	}
 }

@@ -18,6 +18,27 @@ var hostRe = regexp.MustCompile(`(?i)(?:\b[a-z][a-z0-9+.-]*://)?(?:[^\s/@:]+(?::
 // count (so "file.txt" or "v0.6.4" never does).
 var bareTLDs = map[string]bool{}
 
+// cjkTLDs are the real IDN top-level domains written in CJK script. A bare host
+// (no scheme) that ends in one of these is treated as a domain; a bare host that
+// ends in any other CJK run is treated as ideographic-period-separated prose and
+// skipped (so "收到。有更新再跟你說" is not read as a host).
+var cjkTLDs = map[string]bool{
+	"中国": true, "中國": true, "台灣": true, "台湾": true,
+	"香港": true, "澳门": true, "澳門": true,
+	"公司": true, "网络": true, "網絡": true,
+}
+
+// hasCJK reports whether s contains any Han, Hiragana, Katakana or Hangul rune.
+func hasCJK(s string) bool {
+	for _, r := range s {
+		if unicode.Is(unicode.Han, r) || unicode.Is(unicode.Hiragana, r) ||
+			unicode.Is(unicode.Katakana, r) || unicode.Is(unicode.Hangul, r) {
+			return true
+		}
+	}
+	return false
+}
+
 func init() {
 	for _, t := range strings.Fields(`com net org app io dev xyz sh co ai me info biz top site online link cc tw cn ru so us uk de jp kr hk
 		store shop click live pro run page cloud tech tk ml ga cf gq zip mov tv ws gg ly to la vip win bid icu cyou buzz fun space website
@@ -50,6 +71,14 @@ func OffsiteDownload(text string) bool {
 		if !hasScheme && !strings.HasPrefix(host, "www.") {
 			tld := host[strings.LastIndexByte(host, '.')+1:]
 			if !bareTLDs[tld] && !strings.HasPrefix(tld, "xn--") && isASCII(tld) {
+				continue
+			}
+			// A bare host (no scheme) whose last label is CJK script and is not a
+			// real CJK TLD is almost always a sentence split by an ideographic
+			// period ("收到。有更新再跟你說" -> host "收到.有更新再跟你說"), not a
+			// domain. Skip it. Real CJK TLDs (中国, 台灣…) and look-alikes in other
+			// scripts (a Cyrillic ".аpp") are not CJK, so they still go through.
+			if hasCJK(tld) && !cjkTLDs[tld] {
 				continue
 			}
 		}
