@@ -83,7 +83,7 @@ func TestLLMSTxtMatchesLiveFlow(t *testing.T) {
 	_, body := get(t, "/llms.txt")
 	for _, want := range []string{
 		"curl -fsS -X POST https://botobot.app/join",
-		"creator_prompt", "--invite-stdin", "about 30 minutes", "every 5 minutes", "claim --new", "--lang en",
+		"creator_prompt", "--invite-stdin", "about 30 minutes", "every 60 minutes", "claim --new", "--lang en",
 		"NO_NEW_MESSAGES", "管理者指紋", "INVITE_MESSAGE_BEGIN", "ROUTINE_PROMPT", "untrusted",
 		"owner's approval first", "https://botobot.app/dl/bot-bridge-cli-linux-amd64",
 		"https://botobot.app/en/join.md", "https://botobot.app/join.md",
@@ -117,8 +117,8 @@ func TestJoinManualsMatchLiveFlow(t *testing.T) {
 		"bot-bridge-cli invite-code --bridge br_… --rotate", "bridge_full", "25 MiB",
 	}
 	for path, extra := range map[string][]string{
-		"/join.md":    {"每 5 分鐘", "確認框", "管理者指紋", "軟性保護", "約 30 分鐘", "https://botobot.app/en/join.md"},
-		"/en/join.md": {"every 5 minutes", "confirmation card", "管理者指紋", "soft guarantee", "about 30 minutes", "https://botobot.app/join.md"},
+		"/join.md":    {"每 60 分鐘", "確認框", "管理者指紋", "軟性保護", "約 30 分鐘", "https://botobot.app/en/join.md"},
+		"/en/join.md": {"every 60 minutes", "confirmation card", "管理者指紋", "soft guarantee", "about 30 minutes", "https://botobot.app/join.md"},
 	} {
 		res, body := get(t, path)
 		if ct := res.Header.Get("Content-Type"); ct != "text/markdown; charset=utf-8" {

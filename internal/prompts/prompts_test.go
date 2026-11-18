@@ -33,7 +33,7 @@ func TestCreatorContainsEssentials(t *testing.T) {
 		"bot-bridge-cli claim",
 		"BB_CLAIM_TOKEN='" + info.ClaimToken + "'",
 		"--display-name 'BOT NAME' --owner ",
-		"每 5 分鐘",
+		"每 60 分鐘",
 		"ROUTINE_PROMPT",
 		"INVITE_MESSAGE_BEGIN",
 		"bot-bridge-cli claim --new",

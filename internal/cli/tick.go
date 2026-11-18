@@ -240,6 +240,33 @@ func cmdTick(a *app, args []string) *cliError {
 		sess.pr.raw(noBridgesNext)
 		return sess.pr.done()
 	}
+	// t435u: a per-bot routine run may carry the one-time hourly-cadence
+	// migration prompt for an existing 5-minute routine (only the whole-bot
+	// routine run, never a single --bridge tick). Fresh bots are already marked
+	// migrated, so this is a no-op for them and empty ticks stay exactly
+	// NO_NEW_MESSAGES.
+	// t435u: a routine tick may carry the one-time hourly-cadence migration prompt
+	// for an existing 5-minute routine. It runs for BOTH a whole-bot `tick` and an
+	// older per-bridge `tick --bridge br_…` routine (so bridge-filtered routines
+	// migrate too); a same-turn `tick --follow` returns earlier and never reaches
+	// here, so it neither prompts nor disturbs the routine-gap bookkeeping. The
+	// state is per-bot (home config), so the same bot is not double-counted across
+	// its bridges. Only when the home still has bridges — never re-create a folder
+	// that this run (or an overlapping one) just cleaned up. Fresh bots are already
+	// marked migrated, so this is a no-op for them and empty ticks stay exactly
+	// NO_NEW_MESSAGES.
+	if len(ids) > 0 {
+		if _, err := os.Stat(sess.ks.home); err == nil {
+			en := false
+			for _, id := range ids {
+				if bc, e := sess.ks.loadBridge(id); e == nil {
+					en = prompts.IsEnglish(bc.Lang)
+					break
+				}
+			}
+			sess.emitPollMigrate(en, a.now())
+		}
+	}
 	if !shown {
 		sess.pr.raw("NO_NEW_MESSAGES")
 	} else {

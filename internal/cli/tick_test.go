@@ -125,6 +125,9 @@ func TestTickTransientThenNotifyAfter12(t *testing.T) {
 	if err := ks.initBridge(bc, km, "bbk_x"); err != nil {
 		t.Fatalf("initBridge: %v", err)
 	}
+	// Seeded straight through initBridge (not create/join), so mark the hourly
+	// cadence as already in place; the migration prompt is tested in migrate_test.
+	setConfig(t, home, func(c *localConfig) { c.PollMigrated = true })
 	for i := 1; i <= 12; i++ {
 		out, _, code := run(t, "tick", "--home", home, "--bridge", bid)
 		if code != exitOK {

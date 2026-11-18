@@ -608,37 +608,48 @@ func (s *session) printRoutine(routine string, prior int, lang string, hadEntry 
 	// v0.6.1: a bot with a public entry already runs the routine, even when
 	// no visitor line is open yet.
 	case hadEntry && en:
-		s.pr.raw("NEXT: this bot already has a public entry, so it already has its \"bot-bridge inbox\" routine: keep using it (the same routine also checks this one); do not create another. Only if that routine is missing, create it every 5 minutes with only the text after ROUTINE_PROMPT: above.")
+		s.pr.raw("NEXT: this bot already has a public entry, so it already has its \"bot-bridge inbox\" routine: keep using it (the same routine also checks this one); do not create another. Only if that routine is missing, create it every 60 minutes with only the text after ROUTINE_PROMPT: above.")
 	case hadEntry:
-		s.pr.raw("NEXT: 此 Bot 已有公開入口，所以已有「bot-bridge inbox」routine：沿用它（同一個 routine 會一併檢查這裡），不要另建。只有找不到這個 routine 時，才建立每 5 分鐘一次的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。")
+		s.pr.raw("NEXT: 此 Bot 已有公開入口，所以已有「bot-bridge inbox」routine：沿用它（同一個 routine 會一併檢查這裡），不要另建。只有找不到這個 routine 時，才建立每 60 分鐘一次的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。")
 	// v0.6.2: earlier bridges that are all closed (not yet forgotten) are not
 	// "other bridges" (the bot may have deleted its routine already), so the
 	// hint does not claim it has other bridges; the confirmation is still
 	// explicit, and it must not assume a routine survived.
 	case prior > 0 && s.ks.liveCount() <= 1 && en:
-		s.pr.raw("NEXT: check your platform's routine list: if you have CONFIRMED an enabled, unexpired \"bot-bridge inbox\" routine whose prompt is exactly the bridge-agnostic tick line above (same BB_HOME, no --bridge), keep it and do not create another (one routine checks every bridge of this bot). A routine whose prompt contains --bridge is channel-filtered and is NOT reusable as-is: update that routine's prompt to the bridge-agnostic line above, or create a new one. Otherwise create it every 5 minutes with only the text after ROUTINE_PROMPT: above. Do not assume a routine still exists; a limited or expired routine may be gone.")
+		s.pr.raw("NEXT: check your platform's routine list: if you have CONFIRMED an enabled, unexpired \"bot-bridge inbox\" routine whose prompt is exactly the bridge-agnostic tick line above (same BB_HOME, no --bridge), keep it and do not create another (one routine checks every bridge of this bot). A routine whose prompt contains --bridge is channel-filtered and is NOT reusable as-is: update that routine's prompt to the bridge-agnostic line above, or create a new one. Otherwise create it every 60 minutes with only the text after ROUTINE_PROMPT: above. Do not assume a routine still exists; a limited or expired routine may be gone.")
 	case prior > 0 && s.ks.liveCount() <= 1:
-		s.pr.raw("NEXT: 查看你平台的 routine 清單：若已確認有一個「bot-bridge inbox」routine 仍啟用、未過期，且提示詞正是上面那一行、對應同一個 BB_HOME 的 bridge 無關 tick（沒有 --bridge），就沿用它、不要另建（一個 routine 會檢查此 Bot 的所有 bridge）。提示詞含 --bridge 的 routine 是channel過濾的，不能直接沿用：先把它的提示詞改成上面這一行（bridge 無關），或改建新的。否則建立每 5 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。不要假設 routine 還在；限時或過期的 routine 可能已消失。")
+		s.pr.raw("NEXT: 查看你平台的 routine 清單：若已確認有一個「bot-bridge inbox」routine 仍啟用、未過期，且提示詞正是上面那一行、對應同一個 BB_HOME 的 bridge 無關 tick（沒有 --bridge），就沿用它、不要另建（一個 routine 會檢查此 Bot 的所有 bridge）。提示詞含 --bridge 的 routine 是channel過濾的，不能直接沿用：先把它的提示詞改成上面這一行（bridge 無關），或改建新的。否則建立每 60 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。不要假設 routine 還在；限時或過期的 routine 可能已消失。")
 	// prior > 0 means this folder already had a bridge; whether a routine
 	// exists is the bot's to confirm (the CLI cannot see routines, v0.5.3). The
 	// confirmation is explicit: only an enabled, unexpired, bridge-agnostic
 	// inbox routine for this same BB_HOME may be reused; a --bridge (channel-
 	// filtered) routine must be updated to the plain line first or replaced.
 	case prior > 0 && en:
-		s.pr.raw("NEXT: this bot has other bridges. Check your platform's routine list: if you have CONFIRMED an enabled, unexpired \"bot-bridge inbox\" routine whose prompt is exactly the bridge-agnostic tick line above (same BB_HOME, no --bridge), keep it and do not create another (one routine checks every bridge of this bot). A routine whose prompt contains --bridge is channel-filtered and is NOT reusable as-is: update that routine's prompt to the bridge-agnostic line above, or create a new one. Otherwise create it every 5 minutes with only the text after ROUTINE_PROMPT: above. Do not assume a routine still exists just because this bot had one before; a limited or expired routine may be gone.")
+		s.pr.raw("NEXT: this bot has other bridges. Check your platform's routine list: if you have CONFIRMED an enabled, unexpired \"bot-bridge inbox\" routine whose prompt is exactly the bridge-agnostic tick line above (same BB_HOME, no --bridge), keep it and do not create another (one routine checks every bridge of this bot). A routine whose prompt contains --bridge is channel-filtered and is NOT reusable as-is: update that routine's prompt to the bridge-agnostic line above, or create a new one. Otherwise create it every 60 minutes with only the text after ROUTINE_PROMPT: above. Do not assume a routine still exists just because this bot had one before; a limited or expired routine may be gone.")
 	case prior > 0:
-		s.pr.raw("NEXT: 此 Bot 還有別的 bridge。查看你平台的 routine 清單：若已確認有一個「bot-bridge inbox」routine 仍啟用、未過期，且提示詞正是上面那一行、對應同一個 BB_HOME 的 bridge 無關 tick（沒有 --bridge），就沿用它、不要另建（一個 routine 會檢查此 Bot 的所有 bridge）。提示詞含 --bridge 的 routine 是channel過濾的，不能直接沿用：先把它的提示詞改成上面這一行（bridge 無關），或改建新的。否則建立每 5 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。不要因為此 Bot 以前有過 routine 就假設它還在；限時或過期的 routine 可能已消失。")
+		s.pr.raw("NEXT: 此 Bot 還有別的 bridge。查看你平台的 routine 清單：若已確認有一個「bot-bridge inbox」routine 仍啟用、未過期，且提示詞正是上面那一行、對應同一個 BB_HOME 的 bridge 無關 tick（沒有 --bridge），就沿用它、不要另建（一個 routine 會檢查此 Bot 的所有 bridge）。提示詞含 --bridge 的 routine 是channel過濾的，不能直接沿用：先把它的提示詞改成上面這一行（bridge 無關），或改建新的。否則建立每 60 分鐘一次的這個 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。不要因為此 Bot 以前有過 routine 就假設它還在；限時或過期的 routine 可能已消失。")
 	case en && home != "":
-		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 5 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. This step is required: without it no messages arrive. Use the platform's own scheduler; if it cannot run every 5 minutes or more often, stop and tell the owner instead of using a longer interval. To create or join another bridge later, put the same " + home + " in front of the command.")
+		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 60 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. This step is required: without it no messages arrive. Use the platform's own scheduler, running every 60 minutes; if it cannot run at least hourly, stop and tell the owner. To create or join another bridge later, put the same " + home + " in front of the command.")
 	case en:
-		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 5 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. This step is required: without it no messages arrive. Use the platform's own scheduler; if it cannot run every 5 minutes or more often, stop and tell the owner instead of using a longer interval.")
+		s.pr.raw("NEXT: create one routine named \"bot-bridge inbox\" every 60 minutes whose prompt is only the text after ROUTINE_PROMPT: above. It covers every bridge of this bot. This step is required: without it no messages arrive. Use the platform's own scheduler, running every 60 minutes; if it cannot run at least hourly, stop and tell the owner.")
 	case home != "":
-		s.pr.raw("NEXT: 建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立；平台做不到每 5 分鐘（或更頻繁）時，停下並告訴主人，不要改用較長的間隔。之後再建立或加入 bridge 時，指令前加上同一個 " + home + "。")
+		s.pr.raw("NEXT: 建立每 60 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立，每 60 分鐘執行一次；平台連每小時都做不到時，停下並告訴主人。之後再建立或加入 bridge 時，指令前加上同一個 " + home + "。")
 	default:
-		s.pr.raw("NEXT: 建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立；平台做不到每 5 分鐘（或更頻繁）時，停下並告訴主人，不要改用較長的間隔。")
+		s.pr.raw("NEXT: 建立每 60 分鐘一次、名為「bot-bridge inbox」的 routine，提示詞只放上面 ROUTINE_PROMPT: 後的那一行。一個 routine 會檢查此 Bot 的所有 bridge。這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立，每 60 分鐘執行一次；平台連每小時都做不到時，停下並告訴主人。")
 	}
 	s.pr.raw(routineApprovalNext(en))
 }
+
+// Routine cadence (t435u / adaptive polling): the native "bot-bridge inbox"
+// schedule now wakes the host once an hour instead of every 5 minutes, to save
+// the host-assistant tokens an empty wake costs. Density right after a message
+// comes from in-turn `tick --follow`, not from more frequent wakes (the host
+// scheduler is a fixed cron with no cross-turn variable wake). Worst-case first
+// inbound latency is one hour, which the owner accepts.
+const (
+	routineEveryMinutes    = 60
+	routinePollIntervalSec = 3600
+)
 
 // routineCreateLine returns the concrete create-routine parameters as one JSON
 // line the assistant can map directly to its platform's scheduler tool: the
@@ -657,7 +668,7 @@ func routineCreateLine(routine string, reuseIfConfirmed bool) string {
 		PollIntervalSec  int    `json:"poll_interval_sec"`
 		Prompt           string `json:"prompt"`
 		ReuseIfConfirmed bool   `json:"reuse_if_confirmed"`
-	}{"bot-bridge inbox", 5, 300, routine, reuseIfConfirmed}
+	}{"bot-bridge inbox", routineEveryMinutes, routinePollIntervalSec, routine, reuseIfConfirmed}
 	b, _ := json.Marshal(spec)
 	return "ROUTINE_CREATE: " + string(b)
 }

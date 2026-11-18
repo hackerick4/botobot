@@ -308,6 +308,12 @@ func persistNewBridge(sess *session, server, role, handle, lang string, signPriv
 	}
 	if cfg.DefaultBridge == "" {
 		cfg.DefaultBridge = resp.Bridge.BridgeID
+		// t435u: the first bridge on this home means a fresh bot on this version;
+		// it will create its routine at the hourly cadence, so it is already
+		// migrated and never gets the hourly-cadence migration prompt. A home that
+		// already had a bridge keeps whatever the flag says (the tick prompt covers
+		// one still on an old 5-minute routine).
+		cfg.PollMigrated = true
 		if err := sess.ks.saveConfig(cfg); err != nil {
 			return "", "", generalErrorf("save config: %v", err)
 		}

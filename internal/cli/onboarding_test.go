@@ -72,7 +72,7 @@ func TestClaimPrintsRoutineCreateParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ROUTINE_CREATE not valid JSON (%v): %q", err, line)
 	}
-	if spec.Name != "bot-bridge inbox" || spec.EveryMinutes != 5 || spec.PollIntervalSec != 300 {
+	if spec.Name != "bot-bridge inbox" || spec.EveryMinutes != 60 || spec.PollIntervalSec != 3600 {
 		t.Errorf("ROUTINE_CREATE params = %+v", spec)
 	}
 	// A fresh bot (no prior bridge, no entry) creates outright: no reuse to confirm.
@@ -132,7 +132,7 @@ func TestRoutineCreateReuseFlagOnPriorBridge(t *testing.T) {
 	if !spec.ReuseIfConfirmed {
 		t.Errorf("prior-bridge claim: reuse_if_confirmed should be true, got %+v", spec)
 	}
-	if spec.Name != "bot-bridge inbox" || spec.EveryMinutes != 5 || spec.PollIntervalSec != 300 {
+	if spec.Name != "bot-bridge inbox" || spec.EveryMinutes != 60 || spec.PollIntervalSec != 3600 {
 		t.Errorf("ROUTINE_CREATE params = %+v", spec)
 	}
 	if rp := rawLine(o2, "ROUTINE_PROMPT: "); spec.Prompt != rp || spec.Prompt == "" {

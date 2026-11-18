@@ -36,11 +36,11 @@ func TestV051TwoDefaultBotsOneComputer(t *testing.T) {
 	if strings.Count(out, "邀請碼（請保密）：") != 1 || c["invite_message"] != nil || c["invite_code"] != nil {
 		t.Errorf("invite printed more than once:\n%s", out)
 	}
-	if !strings.Contains(rawLine(out, "NEXT: "), "建立每 5 分鐘一次、名為「bot-bridge inbox」的 routine") {
+	if !strings.Contains(rawLine(out, "NEXT: "), "建立每 60 分鐘一次、名為「bot-bridge inbox」的 routine") {
 		t.Errorf("first bridge NEXT = %q", rawLine(out, "NEXT: "))
 	}
 	// v0.6.10 (Rick t313u): the 5-minute schedule is a required step.
-	if !strings.Contains(rawLine(out, "NEXT: "), "這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立；平台做不到每 5 分鐘（或更頻繁）時，停下並告訴主人") {
+	if !strings.Contains(rawLine(out, "NEXT: "), "這一步必做：沒有它就收不到對方的訊息。用平台自己的排程功能建立，每 60 分鐘執行一次；平台連每小時都做不到時，停下並告訴主人") {
 		t.Errorf("first bridge NEXT lacks the required-schedule line: %q", rawLine(out, "NEXT: "))
 	}
 

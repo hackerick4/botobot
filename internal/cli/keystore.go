@@ -274,6 +274,21 @@ type localConfig struct {
 	// remain (v0.5.3), so a later tick can say so plainly instead of staying
 	// silent. Only the id, name and time are kept, for cleanedKeep.
 	Cleaned []cleanedBridge `json:"cleaned,omitempty"`
+	// PollMigrated (t435u): this bot's "bot-bridge inbox" routine is on the new
+	// hourly cadence — either created fresh at 60 min, or an existing 5-minute
+	// routine already switched over — so the one-time migration prompt stops.
+	PollMigrated bool `json:"poll_migrated,omitempty"`
+	// PollMigratePromptedMS / PollMigratePrompts pace that prompt for an existing
+	// 5-minute routine: the first migrateMaxPrompts are migratePromptCooldown
+	// apart, then at most once a day (never giving up) until it is migrated.
+	PollMigratePromptedMS int64 `json:"poll_migrate_prompted_ms,omitempty"`
+	PollMigratePrompts    int   `json:"poll_migrate_prompts,omitempty"`
+	// LastTickMS is the last routine tick run for this bot (home); PollMigrateWideGaps
+	// counts consecutive routine-run gaps of at least migrateConfirmGap. Two in a
+	// row (and at least one prompt sent) marks the hourly cadence live, so a single
+	// host pause does not falsely confirm.
+	LastTickMS          int64 `json:"last_tick_ms,omitempty"`
+	PollMigrateWideGaps int   `json:"poll_migrate_wide_gaps,omitempty"`
 }
 
 // cleanedBridge is one entry of localConfig.Cleaned.

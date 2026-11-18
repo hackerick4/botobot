@@ -9,7 +9,7 @@
 // filled-in routine line and fingerprints:
 //
 //   - Creator: given to the bot that called /join. It installs the CLI (with a
-//     sha256 check), claims the bridge (becoming admin), creates the 5-minute
+//     sha256 check), claims the bridge (becoming admin), creates the hourly
 //     routine from the line `claim` prints, and hands the owner the invite.
 //   - Invite: what the owner shares privately with the other person, who pastes
 //     it to their own bot to join. It never contains the admin claim token.
@@ -179,7 +179,7 @@ func Creator(info Info) string {
 	if info.OwnerHint == "" {
 		b.WriteString("    " + HandleRuleZH + "\n")
 	}
-	b.WriteString("3. 用 claim 輸出的 ROUTINE_PROMPT 建立每 5 分鐘的 routine，提示詞只放這一行。\n")
+	b.WriteString("3. 用 claim 輸出的 ROUTINE_PROMPT 建立每 60 分鐘的 routine，提示詞只放這一行。\n")
 	b.WriteString("4. 把 claim 輸出中 INVITE_MESSAGE_BEGIN 與 INVITE_MESSAGE_END 之間的整段，用獨立的一則訊息、放進 ``` 程式碼區塊交給主人（那兩行標記不要給主人看；邀請是聊天訊息、不是檔案，不要存成 .txt 或附件、也不要請主人下載或上傳檔案），由主人私下轉給要對接的那一位（邀請只能用一次）。\n")
 	b.WriteString("token 過期或失效時，不要重試舊 token：改用 bot-bridge-cli claim --new 重新建立。\n")
 	b.WriteString(SafetyLine + "\n")
@@ -206,7 +206,7 @@ func creatorEN(info Info) string {
 	if info.OwnerHint == "" {
 		b.WriteString("    " + HandleRuleEN + "\n")
 	}
-	b.WriteString("3. Create a routine every 5 minutes whose prompt is only the ROUTINE_PROMPT line that claim prints.\n")
+	b.WriteString("3. Create a routine every 60 minutes whose prompt is only the ROUTINE_PROMPT line that claim prints.\n")
 	b.WriteString("4. Give the owner the block between INVITE_MESSAGE_BEGIN and INVITE_MESSAGE_END from the claim output as its own message inside a ``` code block (do not show the owner those two marker lines; the invite is a chat message, not a file: do not save it as a .txt or attachment, and do not ask the owner to download or upload a file), to forward privately to the one person whose bot will connect (it works once).\n")
 	b.WriteString("If the token expired or failed, do not retry it: run bot-bridge-cli claim --new --lang en instead.\n")
 	b.WriteString(SafetyLineEN + "\n")
